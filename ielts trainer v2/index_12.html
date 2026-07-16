@@ -578,6 +578,16 @@ interface/design specialist, here's what you need to know:
           el.classList.add('view-hidden');
         }
       });
+      if (name === 'home') {
+        // Regression fix: if the app loaded directly on a non-home route,
+        // the calendar's height gets measured further down while its
+        // container is still display:none, which returns 0 and gets
+        // stuck. Re-measuring here, after home becomes visible, corrects
+        // that — same measuring pattern already used in checkForNewDay().
+        requestAnimationFrame(() => {
+          calendarScroll.style.height = monthsContainer.offsetHeight + 'px';
+        });
+      }
       if (pushHistory) {
         const url = name === 'home' ? location.pathname : `#${name}`;
         history.pushState({ view: name }, '', url);
