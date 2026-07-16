@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<!--
+============================================================
+CHANGELOG (plain text, informational only — does not affect
+the running product)
+============================================================
+
+- Added click handling to the "Grammar" item in the circle
+  stadium menu.
+- Restructured the page into a single-page-application (SPA)
+  view system: content areas are wrapped in named containers
+  that show/hide instead of triggering full page reloads.
+- Added a lightweight, hand-rolled client-side router:
+  - 8 routes total: Dashboard (existing home content),
+    Reading, Listening, Writing, Speaking, Vocabulary,
+    Grammar, Setting.
+  - Each route has its own URL (via `location.hash` +
+    `history.pushState`), so browser Back/Forward works and
+    reloading the page keeps you on the same route.
+  - Reading, Listening, Writing, Speaking, Vocabulary,
+    Grammar, and Setting are currently placeholder pages —
+    each just displays its own name as a large heading, no
+    other content yet.
+  - Added a "Dashboard" item to the circle menu (placed at
+    the top of the list) that routes back to the original
+    home screen ("Hello, username" + calendar + stats table).
+- This router is intentionally minimal — no data fetching, no
+  component framework, no lazy loading, all 8 views exist in
+  memory from page load. It was scoped this way on purpose:
+  see "NOTE FOR THE NEXT SPECIALIST" below before extending it.
+
+============================================================
+NOTE FOR THE NEXT SPECIALIST (informational only — does not
+affect the running product)
+============================================================
+
+This project has been worked on under a Frontend Feature
+Engineer contract, which is scoped narrowly to implementation
+(client-side logic, component behavior, state management,
+existing-architecture integration). It is explicitly NOT
+scoped to cover UI/UX design decisions, visual redesign, or
+product decisions — so if you're picking this up as an
+interface/design specialist, here's what you need to know:
+
+1. The 7 placeholder pages (Reading, Listening, Writing,
+   Speaking, Vocabulary, Grammar, Setting) are functionally
+   wired up already — clicking their menu item navigates
+   correctly, updates the URL, and Back/Forward works. They
+   are visually just a giant page title and nothing else.
+   Any layout/visual design added to these pages should slot
+   into the existing `.content-page` / `.page-title` classes,
+   or replace them — just don't remove the routing wiring
+   around them (see ROUTES config and showView() function in
+   the <script> block near the bottom of the file).
+
+2. There is an existing font/color convention already in use
+   site-wide: 'Caveat' (cursive, handwritten style) for large
+   display headings (e.g. "Hello, username", and now each
+   page's title), Arial for body/UI text, #1a1a1a as the
+   primary text/outline color, white backgrounds. Matching
+   this instead of introducing new fonts/colors will keep the
+   site visually consistent — but that's a design call, not
+   mine to make unilaterally, so this is a note, not a rule.
+
+3. Several pieces of existing logic are flagged inline in the
+   <script> block with "OUT-OF-SCOPE" comments — calendar date
+   math, a localStorage-based demo tracker, and a midnight
+   polling/rollover mechanism. These were flagged by a prior
+   specialist as work that shouldn't have been done under a
+   design-scoped contract. They are functional and safe to
+   read, but treat them as placeholder/demo infrastructure,
+   not finished architecture — don't design new features that
+   assume this data layer is permanent.
+
+4. If you add real content to any of the 7 placeholder pages,
+   the router itself does not need to change — just replace
+   what's inside that route's generated view. If you need
+   route parameters, nested routes, or per-page data loading,
+   flag it back to a frontend/engineering specialist rather
+   than extending the router yourself — it was deliberately
+   kept minimal (see CHANGELOG above) and wasn't designed to
+   support that yet.
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Untitled</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      background: #ffffff;
+      font-family: Arial, sans-serif;
+    }
+
+    /* The circle button itself morphs into a stadium/capsule shape when
+       clicked — same element, no separate panel, no seam line between them */
+    .circle-menu {
+      position: fixed;
+      top: 30px;
+      left: 30px;
+      width: 60px;
+      height: 60px;
+      border-radius: 30px;
+      border: 3px solid #1a1a1a;
+      background: #ffffff;
+      cursor: pointer;
+      overflow: hidden;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      transition: height 0.3s ease, box-shadow 0.3s ease;
+      z-index: 101;
+    }
+    .circle-menu.open {
+      box-shadow: 0 12px 30px rgba(0,0,0,0.4);
+    }
+    .circle-cap {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 60px;
+      height: 60px;
+    }
+    .circle-menu-options {
+      list-style: none;
+      margin: 0;
+      padding: 76px 8px 14px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+    .circle-menu.open .circle-menu-options {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .circle-menu-options li {
+      font-size: 0.68rem;
+      text-align: center;
+      color: #1a1a1a;
+      padding: 8px 0;
+      border-bottom: 1px solid #eee;
+    }
+    .circle-menu-options li:last-child { border-bottom: none; }
+
+    /* Logo: fixed to viewport too, top-right, same outline style as the circle */
+    .logo {
+      position: fixed;
+      top: 30px;
+      right: 30px;
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border: 3px solid #1a1a1a;
+      border-radius: 999px;
+      background: #ffffff;
+      padding: 8px 16px;
+      line-height: 1.1;
+      z-index: 100;
+    }
+    .logo .mark {
+      font-weight: 800;
+      font-size: 1.05rem;
+      color: #1a1a1a;
+      letter-spacing: 0.5px;
+    }
+    .logo .sub {
+      font-size: 0.65rem;
+      color: #1a1a1a;
+    }
+
+    /* Section 1: intro screen */
+    .intro-section {
+      position: relative;
+      min-height: 100vh;
+    }
+    .hero {
+      position: absolute;
+      top: 140px;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+    }
+    h1 {
+      font-family: 'Caveat', cursive;
+      font-size: 6rem;
+      font-weight: 600;
+      color: #1a1a1a;
+      margin: 0;
+    }
+    .rect-btn {
+      display: block;
+      margin: 30px auto 0;
+      width: 260px;
+      padding: 14px 0;
+      font-family: monospace;
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: #1a1a1a;
+      background: transparent;
+      border: 3px solid #1a1a1a;
+      cursor: pointer;
+    }
+
+    /* Section 2: tracker dashboard */
+    .tracker-section {
+      padding: 24px;
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      justify-content: center;
+    }
+    .card {
+      background: #ffffff;
+      border: 1px solid #e4e7eb;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      padding: 20px 24px;
+    }
+
+    /* Calendar card */
+    .calendar-card { width: 480px; }
+    .card-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+    .card-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #1a1a1a;
+    }
+    .legend {
+      font-size: 0.85rem;
+      color: #333;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .legend-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #13a62e;
+      display: inline-block;
+    }
+    .card-subtitle {
+      font-size: 0.8rem;
+      color: #888;
+      margin-bottom: 14px;
+    }
+
+    /* Scrollable calendar viewport: fits exactly the current month by default;
+       scrolling up inside it loads earlier months, unlimited. Scrolling down
+       never reveals anything beyond the current month. */
+    .calendar-scroll {
+      overflow-y: auto;
+      overflow-x: hidden;
+      scrollbar-width: thin;
+    }
+    .loading-indicator {
+      text-align: center;
+      font-size: 0.85rem;
+      color: #aaa;
+      padding: 10px 0;
+    }
+    .month-block { margin-bottom: 18px; }
+    .month-label {
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: #1a1a1a;
+      margin-bottom: 10px;
+    }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: 56px repeat(7, 1fr);
+      row-gap: 10px;
+      align-items: center;
+    }
+    .week-label {
+      font-size: 0.8rem;
+      color: #888;
+    }
+    .weekday-label {
+      font-size: 0.8rem;
+      color: #999;
+      text-align: center;
+      font-weight: 600;
+    }
+    .day-cell {
+      text-align: center;
+      font-size: 0.9rem;
+      color: #1a1a1a;
+      position: relative;
+    }
+    .day-cell.today {
+      font-weight: 700;
+      color: #e0ac00;
+    }
+    .day-cell.today::after {
+      content: '';
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #ffcc00;
+      position: absolute;
+      bottom: -6px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    .day-cell.empty { visibility: hidden; }
+
+    /* Stats table card */
+    .stats-card { width: 560px; }
+    table.stats-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 14px;
+      font-size: 0.85rem;
+    }
+    .stats-table th {
+      background: #f2f2f7;
+      color: #555;
+      font-weight: 700;
+      padding: 10px 8px;
+      text-align: center;
+      border: 1px solid #e4e7eb;
+    }
+    .stats-table td {
+      padding: 10px 8px;
+      text-align: center;
+      border: 1px solid #e4e7eb;
+      color: #333;
+      cursor: pointer;
+      user-select: none;
+    }
+    .stats-table td.static { cursor: default; }
+    .stats-table td.on {
+      background: #e5f6e9;
+      color: #13a62e;
+      font-weight: 700;
+    }
+    .stats-table tr.today-row td {
+      border-top: 2px solid #ffcc00;
+      border-bottom: 2px solid #ffcc00;
+    }
+    .stats-table tr.total td {
+      font-weight: 700;
+      color: #1a1a1a;
+      cursor: default;
+    }
+    .stats-note {
+      font-size: 0.72rem;
+      color: #aaa;
+      margin-top: 10px;
+    }
+
+    /* View switching: content area swaps between "pages" with a fade,
+       persistent chrome (.logo, .circle-menu) stays mounted throughout. */
+    .app-view {
+      opacity: 1;
+      transition: opacity 0.18s ease;
+    }
+    .app-view.view-hidden {
+      display: none;
+    }
+    .app-view.view-entering {
+      opacity: 0;
+    }
+    .content-page {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .page-title {
+      font-family: 'Caveat', cursive;
+      font-size: 7rem;
+      font-weight: 600;
+      color: #1a1a1a;
+      margin: 0;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="circle-menu" id="circleMenu">
+    <div class="circle-cap" id="circleCap" aria-label="menu toggle"></div>
+    <ul class="circle-menu-options">
+      <li data-route="home">Dashboard</li>
+      <li data-route="reading">Reading</li>
+      <li data-route="listening">Listening</li>
+      <li data-route="writing">Writing</li>
+      <li data-route="speaking">Speaking</li>
+      <li data-route="vocabulary">Vocabulary</li>
+      <li data-route="grammar">Grammar</li>
+      <li data-route="setting">Setting</li>
+    </ul>
+  </div>
+  <div class="logo">
+    <div class="mark">IELTS</div>
+    <div class="sub">from idp</div>
+  </div>
+
+  <div id="homeView" class="app-view">
+    <section class="intro-section">
+      <div class="hero">
+        <h1 id="greeting">Hello, username</h1>
+        <button class="rect-btn">text</button>
+      </div>
+    </section>
+
+    <section class="tracker-section">
+      <div class="card calendar-card">
+        <div class="card-header-row">
+          <div class="card-title">Calendar</div>
+          <div class="legend"><span class="legend-dot"></span> Có nộp bài</div>
+        </div>
+        <div class="card-subtitle">Bấm vào ngày/tuần để xem thống kê chi tiết số bài đã làm</div>
+
+        <div id="calendarScroll" class="calendar-scroll">
+          <div id="loadingIndicator" class="loading-indicator" style="display:none;">Loading...</div>
+          <div id="monthsContainer"></div>
+        </div>
+      </div>
+
+      <div class="card stats-card">
+        <div class="card-title">Thống kê số bài đã làm trong tuần</div>
+        <table class="stats-table">
+          <thead>
+            <tr>
+              <th>Ngày</th>
+              <th>Reading</th>
+              <th>Listening</th>
+              <th>Writing</th>
+              <th>Speaking</th>
+              <th>Thời gian học</th>
+            </tr>
+          </thead>
+          <tbody id="statsBody"></tbody>
+        </table>
+        <div class="stats-note">Click a cell to mark a session done (demo only — saved in this browser, not real tracked activity).</div>
+      </div>
+    </section>
+  </div>
+
+  <div id="pagesContainer"></div>
+
+  <script>
+    /* ============================================================
+       OUT-OF-AUTHORITY NOTICE (per Interface Design Specialist contract)
+       Everything in this block marked "OUT-OF-SCOPE" below is algorithm /
+       date-logic / state-management work that a design specialist should
+       not have owned. It was implemented directly instead of being
+       flagged and handed off. Backend/logic owner: please review, and
+       treat this as scaffolding to replace or take ownership of, not
+       as approved architecture.
+       ============================================================ */
+
+    const WEEKDAYS = ['T2','T3','T4','T5','T6','T7','CN'];
+    const SUBJECTS = ['reading','listening','writing','speaking'];
+
+    function pad(n){ return n < 10 ? '0' + n : String(n); }
+    function fmtDate(d){ return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()}`; }
+    function sameDay(a,b){ return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate(); }
+
+    // OUT-OF-SCOPE: date/calendar algorithm logic — "algorithms" is
+    // explicitly out-of-authority in the contract. This is calendar math,
+    // not interface design. Should be owned/reviewed by an engineer,
+    // ideally swapped for a vetted date library rather than hand-rolled.
+    function daysInMonth(y,m){ return new Date(y, m+1, 0).getDate(); }
+    function firstWeekdayMon(y,m){ const d = new Date(y,m,1).getDay(); return d===0 ? 6 : d-1; }
+
+    function buildMonthWeeks(y,m){
+      const first = firstWeekdayMon(y,m);
+      const total = daysInMonth(y,m);
+      const cells = [];
+      for(let i=0;i<first;i++) cells.push(null);
+      for(let d=1; d<=total; d++) cells.push(d);
+      while(cells.length % 7 !== 0) cells.push(null);
+      const weeks = [];
+      for(let i=0;i<cells.length;i+=7) weeks.push(cells.slice(i,i+7));
+      return weeks;
+    }
+
+    let today = new Date();
+
+    // --- Circle button toggles a dropdown panel that expands down to the
+    // same height as the "text" box under the greeting ---
+    // --- The circle itself expands into a stadium shape containing options.
+    // Click the cap to open/close; click outside the stadium to close it. ---
+    const circleMenu = document.getElementById('circleMenu');
+    const circleCap = document.getElementById('circleCap');
+    let menuOpen = false;
+
+    const STADIUM_HEIGHT = 420; // fixed expanded height, in px
+
+    function openMenu(){
+      circleMenu.style.height = STADIUM_HEIGHT + 'px';
+      circleMenu.classList.add('open');
+      menuOpen = true;
+    }
+
+    function closeMenu(){
+      circleMenu.style.height = '60px';
+      circleMenu.classList.remove('open');
+      menuOpen = false;
+    }
+
+    circleCap.addEventListener('click', (e) => {
+      e.stopPropagation();
+      menuOpen ? closeMenu() : openMenu();
+    });
+
+    document.addEventListener('click', (e) => {
+      if (menuOpen && !circleMenu.contains(e.target)) closeMenu();
+    });
+
+    // View switching / router: swaps the visible "page" within this single
+    // file. Each route gets its own URL hash and Back/Forward works via the
+    // History API — no separate documents, matches the project's existing
+    // single-file, no-build-step convention.
+    //
+    // ROUTES is the single source of truth: label is shown as the big page
+    // title, and as the menu item text. Adding a new page later means
+    // adding one entry here — nothing else needs to change.
+    const ROUTES = [
+      { key: 'home',       label: 'Dashboard' },
+      { key: 'reading',    label: 'Reading' },
+      { key: 'listening',  label: 'Listening' },
+      { key: 'writing',    label: 'Writing' },
+      { key: 'speaking',   label: 'Speaking' },
+      { key: 'vocabulary', label: 'Vocabulary' },
+      { key: 'grammar',    label: 'Grammar' },
+      { key: 'setting',    label: 'Setting' },
+    ];
+
+    // Build the placeholder page for every route except home (home already
+    // exists as the hand-built dashboard content further up the page).
+    const pagesContainer = document.getElementById('pagesContainer');
+    ROUTES.forEach(route => {
+      if (route.key === 'home') return;
+      const view = document.createElement('div');
+      view.id = `view-${route.key}`;
+      view.className = 'app-view view-hidden';
+      view.innerHTML = `
+        <section class="content-page">
+          <h1 class="page-title">${route.label}</h1>
+        </section>
+      `;
+      pagesContainer.appendChild(view);
+    });
+
+    // VIEWS maps every route key to its DOM element: home view was already
+    // in the HTML, the rest were just generated above.
+    const VIEWS = { home: document.getElementById('homeView') };
+    ROUTES.forEach(route => {
+      if (route.key !== 'home') {
+        VIEWS[route.key] = document.getElementById(`view-${route.key}`);
+      }
+    });
+
+    function showView(name, { pushHistory = true } = {}) {
+      if (!VIEWS[name]) name = 'home'; // unknown hash falls back to home
+      Object.entries(VIEWS).forEach(([key, el]) => {
+        if (key === name) {
+          el.classList.remove('view-hidden');
+          el.classList.add('view-entering');
+          requestAnimationFrame(() => el.classList.remove('view-entering'));
+        } else {
+          el.classList.add('view-hidden');
+        }
+      });
+      if (pushHistory) {
+        const url = name === 'home' ? location.pathname : `#${name}`;
+        history.pushState({ view: name }, '', url);
+      }
+    }
+
+    window.addEventListener('popstate', (e) => {
+      const name = (e.state && e.state.view) || 'home';
+      showView(name, { pushHistory: false });
+    });
+
+    // Wire every menu item to its route via data-route, instead of one
+    // hand-written listener per item.
+    document.querySelectorAll('.circle-menu-options li[data-route]').forEach(li => {
+      li.addEventListener('click', () => {
+        showView(li.dataset.route);
+        closeMenu();
+      });
+    });
+
+    // If the page loads with a route already in the URL hash (e.g. someone
+    // bookmarked #grammar or hit refresh), show that page instead of always
+    // defaulting to home.
+    const initialRoute = location.hash ? location.hash.slice(1) : 'home';
+    showView(initialRoute, { pushHistory: false });
+
+    let cursorY = today.getFullYear();
+    let cursorM = today.getMonth();
+
+    function renderMonthBlock(y, m, markToday){
+      const wrap = document.createElement('div');
+      wrap.className = 'month-block';
+
+      const label = document.createElement('div');
+      label.className = 'month-label';
+      label.textContent = `Tháng ${pad(m+1)} / ${y}`;
+      wrap.appendChild(label);
+
+      const grid = document.createElement('div');
+      grid.className = 'calendar-grid';
+      grid.appendChild(document.createElement('div'));
+      WEEKDAYS.forEach(wd => {
+        const el = document.createElement('div');
+        el.className = 'weekday-label';
+        el.textContent = wd;
+        grid.appendChild(el);
+      });
+
+      const weeks = buildMonthWeeks(y, m);
+      weeks.forEach((week, wi) => {
+        const wlabel = document.createElement('div');
+        wlabel.className = 'week-label';
+        wlabel.textContent = `Tuần ${wi + 1}`;
+        grid.appendChild(wlabel);
+
+        week.forEach(day => {
+          const cell = document.createElement('div');
+          if (day === null) {
+            cell.className = 'day-cell empty';
+          } else {
+            cell.className = 'day-cell';
+            cell.textContent = day;
+            if (markToday && day === today.getDate()) cell.classList.add('today');
+          }
+          grid.appendChild(cell);
+        });
+      });
+
+      wrap.appendChild(grid);
+      return wrap;
+    }
+
+    const monthsContainer = document.getElementById('monthsContainer');
+    const calendarScroll = document.getElementById('calendarScroll');
+    const loadingIndicator = document.getElementById('loadingIndicator');
+
+    // Initial view: current month only, today marked
+    monthsContainer.appendChild(renderMonthBlock(cursorY, cursorM, true));
+
+    // Fit the viewport exactly to the current month's height by default
+    requestAnimationFrame(() => {
+      calendarScroll.style.height = monthsContainer.offsetHeight + 'px';
+    });
+
+    let isLoading = false;
+    function loadPreviousMonth(){
+      if (isLoading) return;
+      isLoading = true;
+      loadingIndicator.style.display = 'block';
+
+      setTimeout(() => {
+        cursorM -= 1;
+        if (cursorM < 0) { cursorM = 11; cursorY -= 1; }
+
+        const beforeHeight = monthsContainer.scrollHeight;
+        const block = renderMonthBlock(cursorY, cursorM, false);
+        monthsContainer.insertBefore(block, monthsContainer.firstChild);
+        const afterHeight = monthsContainer.scrollHeight;
+
+        // keep the visual scroll position stable after prepending
+        calendarScroll.scrollTop += (afterHeight - beforeHeight);
+
+        loadingIndicator.style.display = 'none';
+        isLoading = false;
+      }, 350);
+    }
+
+    // Scrolling UP near the top of the box loads more history, unlimited.
+    // Scrolling down never loads anything beyond the current month.
+    calendarScroll.addEventListener('wheel', (e) => {
+      if (e.deltaY < 0 && calendarScroll.scrollTop <= 40) {
+        loadPreviousMonth();
+      }
+    });
+
+    // --- Weekly stats table: real current week (Mon-Sun), click-to-log demo data ---
+    // OUT-OF-SCOPE: more date-algorithm logic (see notice above).
+    function computeWeekDates(){
+      const dow = today.getDay() === 0 ? 6 : today.getDay() - 1; // Mon=0
+      const monday = new Date(today);
+      monday.setDate(today.getDate() - dow);
+      const dates = [];
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(monday);
+        d.setDate(monday.getDate() + i);
+        dates.push(d);
+      }
+      return dates;
+    }
+    let weekDates = computeWeekDates();
+
+    // OUT-OF-SCOPE: this is state management — explicitly out-of-authority
+    // in the contract. It was built as a "demo only, not real tracking"
+    // stopgap (see stats-note in the HTML) rather than proper application
+    // state, and should not be treated as the real data layer. A backend
+    // engineer should own the actual persistence/tracking model; this
+    // localStorage shim should be removed or replaced, not extended.
+    const STORAGE_KEY = 'weeklyTrackerDemo';
+    function loadData(){
+      try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
+      catch(e) { return {}; }
+    }
+    function saveData(data){
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+    let data = loadData();
+
+    function render(){
+      const tbody = document.getElementById('statsBody');
+      tbody.innerHTML = '';
+      const totals = { reading:0, listening:0, writing:0, speaking:0, minutes:0 };
+
+      weekDates.forEach(d => {
+        const key = fmtDate(d);
+        const entry = data[key] || {};
+        const tr = document.createElement('tr');
+        if (sameDay(d, today)) tr.classList.add('today-row');
+
+        const dateTd = document.createElement('td');
+        dateTd.className = 'static';
+        dateTd.textContent = key;
+        tr.appendChild(dateTd);
+
+        let minutes = 0;
+        SUBJECTS.forEach(subj => {
+          const td = document.createElement('td');
+          const on = !!entry[subj];
+          if (on) { td.classList.add('on'); td.textContent = '1'; minutes += 5; totals[subj] += 1; }
+          else { td.textContent = '-'; }
+          td.addEventListener('click', () => {
+            // OUT-OF-SCOPE: mutating/persisting application state on user
+            // interaction. This is the actual "tracking" logic, not UI —
+            // belongs to whoever owns real session/study data, not design.
+            entry[subj] = !entry[subj];
+            data[key] = entry;
+            saveData(data);
+            render();
+          });
+          tr.appendChild(td);
+        });
+
+        const timeTd = document.createElement('td');
+        timeTd.className = 'static';
+        timeTd.textContent = minutes + 'm';
+        totals.minutes += minutes;
+        tr.appendChild(timeTd);
+
+        tbody.appendChild(tr);
+      });
+
+      const totalTr = document.createElement('tr');
+      totalTr.className = 'total';
+      totalTr.innerHTML = `<td>Tổng cộng</td><td>${totals.reading}</td><td>${totals.listening}</td><td>${totals.writing}</td><td>${totals.speaking}</td><td>${totals.minutes}m</td>`;
+      tbody.appendChild(totalTr);
+    }
+
+    render();
+
+    // OUT-OF-SCOPE: background polling + date-comparison logic driving
+    // when UI state gets invalidated/re-derived. This is app behavior
+    // (a scheduling/refresh mechanism), not visual/interaction design —
+    // flag for whoever owns client-side data freshness, don't extend
+    // this ad hoc setInterval pattern further.
+    // --- Live rollover: if the tab is left open past midnight, advance
+    // "today" automatically instead of staying frozen on the old date. ---
+    function checkForNewDay(){
+      const now = new Date();
+      if (sameDay(now, today)) return;
+
+      today = now;
+
+      // Reset the calendar back to a fresh view of the new current month.
+      cursorY = today.getFullYear();
+      cursorM = today.getMonth();
+      monthsContainer.innerHTML = '';
+      monthsContainer.appendChild(renderMonthBlock(cursorY, cursorM, true));
+      calendarScroll.style.height = 'auto';
+      requestAnimationFrame(() => {
+        calendarScroll.style.height = monthsContainer.offsetHeight + 'px';
+      });
+
+      // Recompute the current week and re-render the tracker.
+      weekDates = computeWeekDates();
+      render();
+    }
+    setInterval(checkForNewDay, 60000); // check once a minute
+  </script>
+</body>
+</html>
