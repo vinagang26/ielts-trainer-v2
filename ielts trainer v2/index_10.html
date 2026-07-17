@@ -278,6 +278,23 @@
       color: #aaa;
       margin-top: 10px;
     }
+
+    /* View switching: content area swaps between "pages" with a fade,
+       persistent chrome (.logo, .circle-menu) stays mounted throughout. */
+    .app-view {
+      opacity: 1;
+      transition: opacity 0.18s ease;
+    }
+    .app-view.view-hidden {
+      display: none;
+    }
+    .app-view.view-entering {
+      opacity: 0;
+    }
+    .grammar-view {
+      min-height: 100vh;
+      padding: 140px 24px 24px;
+    }
   </style>
 </head>
 <body>
@@ -298,45 +315,51 @@
     <div class="sub">from idp</div>
   </div>
 
-  <section class="intro-section">
-    <div class="hero">
-      <h1 id="greeting">Hello, username</h1>
-      <button class="rect-btn">text</button>
-    </div>
-  </section>
-
-  <section class="tracker-section">
-    <div class="card calendar-card">
-      <div class="card-header-row">
-        <div class="card-title">Calendar</div>
-        <div class="legend"><span class="legend-dot"></span> Có nộp bài</div>
+  <div id="homeView" class="app-view">
+    <section class="intro-section">
+      <div class="hero">
+        <h1 id="greeting">Hello, username</h1>
+        <button class="rect-btn">text</button>
       </div>
-      <div class="card-subtitle">Bấm vào ngày/tuần để xem thống kê chi tiết số bài đã làm</div>
+    </section>
 
-      <div id="calendarScroll" class="calendar-scroll">
-        <div id="loadingIndicator" class="loading-indicator" style="display:none;">Loading...</div>
-        <div id="monthsContainer"></div>
+    <section class="tracker-section">
+      <div class="card calendar-card">
+        <div class="card-header-row">
+          <div class="card-title">Calendar</div>
+          <div class="legend"><span class="legend-dot"></span> Có nộp bài</div>
+        </div>
+        <div class="card-subtitle">Bấm vào ngày/tuần để xem thống kê chi tiết số bài đã làm</div>
+
+        <div id="calendarScroll" class="calendar-scroll">
+          <div id="loadingIndicator" class="loading-indicator" style="display:none;">Loading...</div>
+          <div id="monthsContainer"></div>
+        </div>
       </div>
-    </div>
 
-    <div class="card stats-card">
-      <div class="card-title">Thống kê số bài đã làm trong tuần</div>
-      <table class="stats-table">
-        <thead>
-          <tr>
-            <th>Ngày</th>
-            <th>Reading</th>
-            <th>Listening</th>
-            <th>Writing</th>
-            <th>Speaking</th>
-            <th>Thời gian học</th>
-          </tr>
-        </thead>
-        <tbody id="statsBody"></tbody>
-      </table>
-      <div class="stats-note">Click a cell to mark a session done (demo only — saved in this browser, not real tracked activity).</div>
-    </div>
-  </section>
+      <div class="card stats-card">
+        <div class="card-title">Thống kê số bài đã làm trong tuần</div>
+        <table class="stats-table">
+          <thead>
+            <tr>
+              <th>Ngày</th>
+              <th>Reading</th>
+              <th>Listening</th>
+              <th>Writing</th>
+              <th>Speaking</th>
+              <th>Thời gian học</th>
+            </tr>
+          </thead>
+          <tbody id="statsBody"></tbody>
+        </table>
+        <div class="stats-note">Click a cell to mark a session done (demo only — saved in this browser, not real tracked activity).</div>
+      </div>
+    </section>
+  </div>
+
+  <div id="grammarView" class="app-view view-hidden">
+    <section class="grammar-view"></section>
+  </div>
 
   <script>
     /* ============================================================
@@ -408,9 +431,39 @@
       if (menuOpen && !circleMenu.contains(e.target)) closeMenu();
     });
 
-    // Grammar menu item navigates to a separate blank page, same tab.
+    // View switching: swaps the visible "page" within this single file.
+    // Mirrors real page navigation (URL changes, Back button works) without
+    // introducing a router or separate documents — matches the project's
+    // existing single-file, no-build-step convention.
+    const VIEWS = {
+      home: document.getElementById('homeView'),
+      grammar: document.getElementById('grammarView'),
+    };
+
+    function showView(name, { pushHistory = true } = {}) {
+      Object.entries(VIEWS).forEach(([key, el]) => {
+        if (key === name) {
+          el.classList.remove('view-hidden');
+          el.classList.add('view-entering');
+          requestAnimationFrame(() => el.classList.remove('view-entering'));
+        } else {
+          el.classList.add('view-hidden');
+        }
+      });
+      if (pushHistory) {
+        const url = name === 'home' ? location.pathname : `#${name}`;
+        history.pushState({ view: name }, '', url);
+      }
+    }
+
+    window.addEventListener('popstate', (e) => {
+      const name = (e.state && e.state.view) || 'home';
+      showView(name, { pushHistory: false });
+    });
+
     document.getElementById('menuGrammar').addEventListener('click', () => {
-      location.href = 'grammar.html';
+      showView('grammar');
+      closeMenu();
     });
 
     let cursorY = today.getFullYear();

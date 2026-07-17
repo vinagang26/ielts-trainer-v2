@@ -278,19 +278,48 @@
       color: #aaa;
       margin-top: 10px;
     }
+
+    /* View switching: content area swaps between "pages" with a fade,
+       persistent chrome (.logo, .circle-menu) stays mounted throughout. */
+    .app-view {
+      opacity: 1;
+      transition: opacity 0.18s ease;
+    }
+    .app-view.view-hidden {
+      display: none;
+    }
+    .app-view.view-entering {
+      opacity: 0;
+    }
+    .content-page {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .page-title {
+      font-family: 'Caveat', cursive;
+      font-size: 7rem;
+      font-weight: 600;
+      color: #1a1a1a;
+      margin: 0;
+      text-align: center;
+    }
   </style>
 </head>
 <body>
   <div class="circle-menu" id="circleMenu">
     <div class="circle-cap" id="circleCap" aria-label="menu toggle"></div>
     <ul class="circle-menu-options">
-      <li>Reading</li>
-      <li>Listening</li>
-      <li>Writing</li>
-      <li>Speaking</li>
-      <li>Vocabulary</li>
-      <li id="menuGrammar">Grammar</li>
-      <li>Setting</li>
+      <li data-route="home">Dashboard</li>
+      <li data-route="reading">Reading</li>
+      <li data-route="listening">Listening</li>
+      <li data-route="writing">Writing</li>
+      <li data-route="speaking">Speaking</li>
+      <li data-route="vocabulary">Vocabulary</li>
+      <li data-route="grammar">Grammar</li>
+      <li data-route="setting">Setting</li>
     </ul>
   </div>
   <div class="logo">
@@ -298,45 +327,49 @@
     <div class="sub">from idp</div>
   </div>
 
-  <section class="intro-section">
-    <div class="hero">
-      <h1 id="greeting">Hello, username</h1>
-      <button class="rect-btn">text</button>
-    </div>
-  </section>
-
-  <section class="tracker-section">
-    <div class="card calendar-card">
-      <div class="card-header-row">
-        <div class="card-title">Calendar</div>
-        <div class="legend"><span class="legend-dot"></span> Có nộp bài</div>
+  <div id="homeView" class="app-view">
+    <section class="intro-section">
+      <div class="hero">
+        <h1 id="greeting">Hello, username</h1>
+        <button class="rect-btn">text</button>
       </div>
-      <div class="card-subtitle">Bấm vào ngày/tuần để xem thống kê chi tiết số bài đã làm</div>
+    </section>
 
-      <div id="calendarScroll" class="calendar-scroll">
-        <div id="loadingIndicator" class="loading-indicator" style="display:none;">Loading...</div>
-        <div id="monthsContainer"></div>
+    <section class="tracker-section">
+      <div class="card calendar-card">
+        <div class="card-header-row">
+          <div class="card-title">Calendar</div>
+          <div class="legend"><span class="legend-dot"></span> Có nộp bài</div>
+        </div>
+        <div class="card-subtitle">Bấm vào ngày/tuần để xem thống kê chi tiết số bài đã làm</div>
+
+        <div id="calendarScroll" class="calendar-scroll">
+          <div id="loadingIndicator" class="loading-indicator" style="display:none;">Loading...</div>
+          <div id="monthsContainer"></div>
+        </div>
       </div>
-    </div>
 
-    <div class="card stats-card">
-      <div class="card-title">Thống kê số bài đã làm trong tuần</div>
-      <table class="stats-table">
-        <thead>
-          <tr>
-            <th>Ngày</th>
-            <th>Reading</th>
-            <th>Listening</th>
-            <th>Writing</th>
-            <th>Speaking</th>
-            <th>Thời gian học</th>
-          </tr>
-        </thead>
-        <tbody id="statsBody"></tbody>
-      </table>
-      <div class="stats-note">Click a cell to mark a session done (demo only — saved in this browser, not real tracked activity).</div>
-    </div>
-  </section>
+      <div class="card stats-card">
+        <div class="card-title">Thống kê số bài đã làm trong tuần</div>
+        <table class="stats-table">
+          <thead>
+            <tr>
+              <th>Ngày</th>
+              <th>Reading</th>
+              <th>Listening</th>
+              <th>Writing</th>
+              <th>Speaking</th>
+              <th>Thời gian học</th>
+            </tr>
+          </thead>
+          <tbody id="statsBody"></tbody>
+        </table>
+        <div class="stats-note">Click a cell to mark a session done (demo only — saved in this browser, not real tracked activity).</div>
+      </div>
+    </section>
+  </div>
+
+  <div id="pagesContainer"></div>
 
   <script>
     /* ============================================================
@@ -408,10 +441,86 @@
       if (menuOpen && !circleMenu.contains(e.target)) closeMenu();
     });
 
-    // Grammar menu item navigates to a separate blank page, same tab.
-    document.getElementById('menuGrammar').addEventListener('click', () => {
-      location.href = 'grammar.html';
+    // View switching / router: swaps the visible "page" within this single
+    // file. Each route gets its own URL hash and Back/Forward works via the
+    // History API — no separate documents, matches the project's existing
+    // single-file, no-build-step convention.
+    //
+    // ROUTES is the single source of truth: label is shown as the big page
+    // title, and as the menu item text. Adding a new page later means
+    // adding one entry here — nothing else needs to change.
+    const ROUTES = [
+      { key: 'home',       label: 'Dashboard' },
+      { key: 'reading',    label: 'Reading' },
+      { key: 'listening',  label: 'Listening' },
+      { key: 'writing',    label: 'Writing' },
+      { key: 'speaking',   label: 'Speaking' },
+      { key: 'vocabulary', label: 'Vocabulary' },
+      { key: 'grammar',    label: 'Grammar' },
+      { key: 'setting',    label: 'Setting' },
+    ];
+
+    // Build the placeholder page for every route except home (home already
+    // exists as the hand-built dashboard content further up the page).
+    const pagesContainer = document.getElementById('pagesContainer');
+    ROUTES.forEach(route => {
+      if (route.key === 'home') return;
+      const view = document.createElement('div');
+      view.id = `view-${route.key}`;
+      view.className = 'app-view view-hidden';
+      view.innerHTML = `
+        <section class="content-page">
+          <h1 class="page-title">${route.label}</h1>
+        </section>
+      `;
+      pagesContainer.appendChild(view);
     });
+
+    // VIEWS maps every route key to its DOM element: home view was already
+    // in the HTML, the rest were just generated above.
+    const VIEWS = { home: document.getElementById('homeView') };
+    ROUTES.forEach(route => {
+      if (route.key !== 'home') {
+        VIEWS[route.key] = document.getElementById(`view-${route.key}`);
+      }
+    });
+
+    function showView(name, { pushHistory = true } = {}) {
+      if (!VIEWS[name]) name = 'home'; // unknown hash falls back to home
+      Object.entries(VIEWS).forEach(([key, el]) => {
+        if (key === name) {
+          el.classList.remove('view-hidden');
+          el.classList.add('view-entering');
+          requestAnimationFrame(() => el.classList.remove('view-entering'));
+        } else {
+          el.classList.add('view-hidden');
+        }
+      });
+      if (pushHistory) {
+        const url = name === 'home' ? location.pathname : `#${name}`;
+        history.pushState({ view: name }, '', url);
+      }
+    }
+
+    window.addEventListener('popstate', (e) => {
+      const name = (e.state && e.state.view) || 'home';
+      showView(name, { pushHistory: false });
+    });
+
+    // Wire every menu item to its route via data-route, instead of one
+    // hand-written listener per item.
+    document.querySelectorAll('.circle-menu-options li[data-route]').forEach(li => {
+      li.addEventListener('click', () => {
+        showView(li.dataset.route);
+        closeMenu();
+      });
+    });
+
+    // If the page loads with a route already in the URL hash (e.g. someone
+    // bookmarked #grammar or hit refresh), show that page instead of always
+    // defaulting to home.
+    const initialRoute = location.hash ? location.hash.slice(1) : 'home';
+    showView(initialRoute, { pushHistory: false });
 
     let cursorY = today.getFullYear();
     let cursorM = today.getMonth();

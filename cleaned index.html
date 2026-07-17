@@ -278,19 +278,48 @@
       color: #aaa;
       margin-top: 10px;
     }
+
+    /* View switching: content area swaps between "pages" with a fade,
+       persistent chrome (.logo, .circle-menu) stays mounted throughout. */
+    .app-view {
+      opacity: 1;
+      transition: opacity 0.18s ease;
+    }
+    .app-view.view-hidden {
+      display: none;
+    }
+    .app-view.view-entering {
+      opacity: 0;
+    }
+    .content-page {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .page-title {
+      font-family: 'Caveat', cursive;
+      font-size: 7rem;
+      font-weight: 600;
+      color: #1a1a1a;
+      margin: 0;
+      text-align: center;
+    }
   </style>
 </head>
 <body>
   <div class="circle-menu" id="circleMenu">
     <div class="circle-cap" id="circleCap" aria-label="menu toggle"></div>
     <ul class="circle-menu-options">
-      <li>Reading</li>
-      <li>Listening</li>
-      <li>Writing</li>
-      <li>Speaking</li>
-      <li>Vocabulary</li>
-      <li id="menuGrammar">Grammar</li>
-      <li>Setting</li>
+      <li data-route="home">Dashboard</li>
+      <li data-route="reading">Reading</li>
+      <li data-route="listening">Listening</li>
+      <li data-route="writing">Writing</li>
+      <li data-route="speaking">Speaking</li>
+      <li data-route="vocabulary">Vocabulary</li>
+      <li data-route="grammar">Grammar</li>
+      <li data-route="setting">Setting</li>
     </ul>
   </div>
   <div class="logo">
@@ -298,57 +327,51 @@
     <div class="sub">from idp</div>
   </div>
 
-  <section class="intro-section">
-    <div class="hero">
-      <h1 id="greeting">Hello, username</h1>
-      <button class="rect-btn">text</button>
-    </div>
-  </section>
-
-  <section class="tracker-section">
-    <div class="card calendar-card">
-      <div class="card-header-row">
-        <div class="card-title">Calendar</div>
-        <div class="legend"><span class="legend-dot"></span> Có nộp bài</div>
+  <div id="homeView" class="app-view">
+    <section class="intro-section">
+      <div class="hero">
+        <h1 id="greeting">Hello, username</h1>
+        <button class="rect-btn">text</button>
       </div>
-      <div class="card-subtitle">Bấm vào ngày/tuần để xem thống kê chi tiết số bài đã làm</div>
+    </section>
 
-      <div id="calendarScroll" class="calendar-scroll">
-        <div id="loadingIndicator" class="loading-indicator" style="display:none;">Loading...</div>
-        <div id="monthsContainer"></div>
+    <section class="tracker-section">
+      <div class="card calendar-card">
+        <div class="card-header-row">
+          <div class="card-title">Calendar</div>
+          <div class="legend"><span class="legend-dot"></span> Có nộp bài</div>
+        </div>
+        <div class="card-subtitle">Bấm vào ngày/tuần để xem thống kê chi tiết số bài đã làm</div>
+
+        <div id="calendarScroll" class="calendar-scroll">
+          <div id="loadingIndicator" class="loading-indicator" style="display:none;">Loading...</div>
+          <div id="monthsContainer"></div>
+        </div>
       </div>
-    </div>
 
-    <div class="card stats-card">
-      <div class="card-title">Thống kê số bài đã làm trong tuần</div>
-      <table class="stats-table">
-        <thead>
-          <tr>
-            <th>Ngày</th>
-            <th>Reading</th>
-            <th>Listening</th>
-            <th>Writing</th>
-            <th>Speaking</th>
-            <th>Thời gian học</th>
-          </tr>
-        </thead>
-        <tbody id="statsBody"></tbody>
-      </table>
-      <div class="stats-note">Click a cell to mark a session done (demo only — saved in this browser, not real tracked activity).</div>
-    </div>
-  </section>
+      <div class="card stats-card">
+        <div class="card-title">Thống kê số bài đã làm trong tuần</div>
+        <table class="stats-table">
+          <thead>
+            <tr>
+              <th>Ngày</th>
+              <th>Reading</th>
+              <th>Listening</th>
+              <th>Writing</th>
+              <th>Speaking</th>
+              <th>Thời gian học</th>
+            </tr>
+          </thead>
+          <tbody id="statsBody"></tbody>
+        </table>
+        <div class="stats-note">Click a cell to mark a session done (demo only — saved in this browser, not real tracked activity).</div>
+      </div>
+    </section>
+  </div>
+
+  <div id="pagesContainer"></div>
 
   <script>
-    /* ============================================================
-       OUT-OF-AUTHORITY NOTICE (per Interface Design Specialist contract)
-       Everything in this block marked "OUT-OF-SCOPE" below is algorithm /
-       date-logic / state-management work that a design specialist should
-       not have owned. It was implemented directly instead of being
-       flagged and handed off. Backend/logic owner: please review, and
-       treat this as scaffolding to replace or take ownership of, not
-       as approved architecture.
-       ============================================================ */
-
     const WEEKDAYS = ['T2','T3','T4','T5','T6','T7','CN'];
     const SUBJECTS = ['reading','listening','writing','speaking'];
 
@@ -356,10 +379,6 @@
     function fmtDate(d){ return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()}`; }
     function sameDay(a,b){ return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate(); }
 
-    // OUT-OF-SCOPE: date/calendar algorithm logic — "algorithms" is
-    // explicitly out-of-authority in the contract. This is calendar math,
-    // not interface design. Should be owned/reviewed by an engineer,
-    // ideally swapped for a vetted date library rather than hand-rolled.
     function daysInMonth(y,m){ return new Date(y, m+1, 0).getDate(); }
     function firstWeekdayMon(y,m){ const d = new Date(y,m,1).getDay(); return d===0 ? 6 : d-1; }
 
@@ -385,7 +404,7 @@
     const circleCap = document.getElementById('circleCap');
     let menuOpen = false;
 
-    const STADIUM_HEIGHT = 420; // fixed expanded height, in px
+    const STADIUM_HEIGHT = 420;
 
     function openMenu(){
       circleMenu.style.height = STADIUM_HEIGHT + 'px';
@@ -408,10 +427,96 @@
       if (menuOpen && !circleMenu.contains(e.target)) closeMenu();
     });
 
-    // Grammar menu item navigates to a separate blank page, same tab.
-    document.getElementById('menuGrammar').addEventListener('click', () => {
-      location.href = 'grammar.html';
+    // View switching / router: swaps the visible "page" within this single
+    // file. Each route gets its own URL hash and Back/Forward works via the
+    // History API — no separate documents, matches the project's existing
+    // single-file, no-build-step convention.
+    //
+    // ROUTES is the single source of truth: label is shown as the big page
+    // title, and as the menu item text. Adding a new page later means
+    // adding one entry here — nothing else needs to change.
+    const ROUTES = [
+      { key: 'home',       label: 'Dashboard' },
+      { key: 'reading',    label: 'Reading' },
+      { key: 'listening',  label: 'Listening' },
+      { key: 'writing',    label: 'Writing' },
+      { key: 'speaking',   label: 'Speaking' },
+      { key: 'vocabulary', label: 'Vocabulary' },
+      { key: 'grammar',    label: 'Grammar' },
+      { key: 'setting',    label: 'Setting' },
+    ];
+
+    // Build the placeholder page for every route except home (home already
+    // exists as the hand-built dashboard content further up the page).
+    const pagesContainer = document.getElementById('pagesContainer');
+    ROUTES.forEach(route => {
+      if (route.key === 'home') return;
+      const view = document.createElement('div');
+      view.id = `view-${route.key}`;
+      view.className = 'app-view view-hidden';
+      view.innerHTML = `
+        <section class="content-page">
+          <h1 class="page-title">${route.label}</h1>
+        </section>
+      `;
+      pagesContainer.appendChild(view);
     });
+
+    // VIEWS maps every route key to its DOM element: home view was already
+    // in the HTML, the rest were just generated above.
+    const VIEWS = { home: document.getElementById('homeView') };
+    ROUTES.forEach(route => {
+      if (route.key !== 'home') {
+        VIEWS[route.key] = document.getElementById(`view-${route.key}`);
+      }
+    });
+
+    function showView(name, { pushHistory = true } = {}) {
+      if (!VIEWS[name]) name = 'home'; // unknown hash falls back to home
+      Object.entries(VIEWS).forEach(([key, el]) => {
+        if (key === name) {
+          el.classList.remove('view-hidden');
+          el.classList.add('view-entering');
+          requestAnimationFrame(() => el.classList.remove('view-entering'));
+        } else {
+          el.classList.add('view-hidden');
+        }
+      });
+      if (name === 'home') {
+        // Regression fix: if the app loaded directly on a non-home route,
+        // the calendar's height gets measured further down while its
+        // container is still display:none, which returns 0 and gets
+        // stuck. Re-measuring here, after home becomes visible, corrects
+        // that — same measuring pattern already used in checkForNewDay().
+        requestAnimationFrame(() => {
+          calendarScroll.style.height = monthsContainer.offsetHeight + 'px';
+        });
+      }
+      if (pushHistory) {
+        const url = name === 'home' ? location.pathname : `#${name}`;
+        history.pushState({ view: name }, '', url);
+      }
+    }
+
+    window.addEventListener('popstate', (e) => {
+      const name = (e.state && e.state.view) || 'home';
+      showView(name, { pushHistory: false });
+    });
+
+    // Wire every menu item to its route via data-route, instead of one
+    // hand-written listener per item.
+    document.querySelectorAll('.circle-menu-options li[data-route]').forEach(li => {
+      li.addEventListener('click', () => {
+        showView(li.dataset.route);
+        closeMenu();
+      });
+    });
+
+    // If the page loads with a route already in the URL hash (e.g. someone
+    // bookmarked #grammar or hit refresh), show that page instead of always
+    // defaulting to home.
+    const initialRoute = location.hash ? location.hash.slice(1) : 'home';
+    showView(initialRoute, { pushHistory: false });
 
     let cursorY = today.getFullYear();
     let cursorM = today.getMonth();
@@ -503,7 +608,6 @@
     });
 
     // --- Weekly stats table: real current week (Mon-Sun), click-to-log demo data ---
-    // OUT-OF-SCOPE: more date-algorithm logic (see notice above).
     function computeWeekDates(){
       const dow = today.getDay() === 0 ? 6 : today.getDay() - 1; // Mon=0
       const monday = new Date(today);
@@ -518,12 +622,7 @@
     }
     let weekDates = computeWeekDates();
 
-    // OUT-OF-SCOPE: this is state management — explicitly out-of-authority
-    // in the contract. It was built as a "demo only, not real tracking"
-    // stopgap (see stats-note in the HTML) rather than proper application
-    // state, and should not be treated as the real data layer. A backend
-    // engineer should own the actual persistence/tracking model; this
-    // localStorage shim should be removed or replaced, not extended.
+    // Demo-only tracking data, stored in localStorage — not a real backend/persistence layer.
     const STORAGE_KEY = 'weeklyTrackerDemo';
     function loadData(){
       try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
@@ -557,9 +656,6 @@
           if (on) { td.classList.add('on'); td.textContent = '1'; minutes += 5; totals[subj] += 1; }
           else { td.textContent = '-'; }
           td.addEventListener('click', () => {
-            // OUT-OF-SCOPE: mutating/persisting application state on user
-            // interaction. This is the actual "tracking" logic, not UI —
-            // belongs to whoever owns real session/study data, not design.
             entry[subj] = !entry[subj];
             data[key] = entry;
             saveData(data);
@@ -585,11 +681,6 @@
 
     render();
 
-    // OUT-OF-SCOPE: background polling + date-comparison logic driving
-    // when UI state gets invalidated/re-derived. This is app behavior
-    // (a scheduling/refresh mechanism), not visual/interaction design —
-    // flag for whoever owns client-side data freshness, don't extend
-    // this ad hoc setInterval pattern further.
     // --- Live rollover: if the tab is left open past midnight, advance
     // "today" automatically instead of staying frozen on the old date. ---
     function checkForNewDay(){
@@ -612,7 +703,7 @@
       weekDates = computeWeekDates();
       render();
     }
-    setInterval(checkForNewDay, 60000); // check once a minute
+    setInterval(checkForNewDay, 60000);
   </script>
 </body>
 </html>

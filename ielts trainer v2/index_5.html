@@ -26,21 +26,43 @@
       border: 3px solid #1a1a1a;
       background: #ffffff;
       cursor: pointer;
-      z-index: 100;
+      z-index: 101;
     }
 
-    /* Section 1: intro screen */
-    .intro-section {
-      position: relative;
-      min-height: 100vh;
-    }
-
-    /* Logo now shares the same visual language as the circle button:
-       black outline, transparent fill, pill shape */
-    .logo {
-      position: absolute;
-      top: 105px;
+    /* Dropdown panel toggled by the circle button */
+    .circle-menu {
+      position: fixed;
+      top: 90px;
       left: 30px;
+      width: 50vw;
+      height: 0;
+      overflow: hidden;
+      background: #ffffff;
+      border: 3px solid #1a1a1a;
+      border-top: none;
+      border-bottom-left-radius: 12px;
+      border-bottom-right-radius: 12px;
+      transition: height 0.3s ease;
+      z-index: 99;
+    }
+    .circle-menu ul {
+      list-style: none;
+      margin: 0;
+      padding: 16px 24px;
+    }
+    .circle-menu li {
+      padding: 10px 0;
+      font-size: 0.95rem;
+      color: #1a1a1a;
+      border-bottom: 1px solid #eee;
+    }
+    .circle-menu li:last-child { border-bottom: none; }
+
+    /* Logo: fixed to viewport too, top-right, same outline style as the circle */
+    .logo {
+      position: fixed;
+      top: 30px;
+      right: 30px;
       display: inline-flex;
       flex-direction: column;
       align-items: center;
@@ -50,6 +72,7 @@
       background: #ffffff;
       padding: 8px 16px;
       line-height: 1.1;
+      z-index: 100;
     }
     .logo .mark {
       font-weight: 800;
@@ -62,6 +85,11 @@
       color: #1a1a1a;
     }
 
+    /* Section 1: intro screen */
+    .intro-section {
+      position: relative;
+      min-height: 100vh;
+    }
     .hero {
       position: absolute;
       top: 140px;
@@ -140,16 +168,21 @@
       margin-bottom: 14px;
     }
 
-    .tail-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 16px;
-      font-size: 0.85rem;
-      color: #666;
+    /* Scrollable calendar viewport: fits exactly the current month by default;
+       scrolling up inside it loads earlier months, unlimited. Scrolling down
+       never reveals anything beyond the current month. */
+    .calendar-scroll {
+      overflow-y: auto;
+      overflow-x: hidden;
+      scrollbar-width: thin;
     }
-    .tail-row .day-num { color: #1a1a1a; font-weight: 600; }
-
+    .loading-indicator {
+      text-align: center;
+      font-size: 0.85rem;
+      color: #aaa;
+      padding: 10px 0;
+    }
+    .month-block { margin-bottom: 18px; }
     .month-label {
       font-weight: 700;
       font-size: 0.95rem;
@@ -181,14 +214,14 @@
     }
     .day-cell.today {
       font-weight: 700;
-      color: #13a62e;
+      color: #e0ac00;
     }
     .day-cell.today::after {
       content: '';
       width: 5px;
       height: 5px;
       border-radius: 50%;
-      background: #13a62e;
+      background: #ffcc00;
       position: absolute;
       bottom: -6px;
       left: 50%;
@@ -227,8 +260,8 @@
       font-weight: 700;
     }
     .stats-table tr.today-row td {
-      border-top: 2px solid #13a62e;
-      border-bottom: 2px solid #13a62e;
+      border-top: 2px solid #ffcc00;
+      border-bottom: 2px solid #ffcc00;
     }
     .stats-table tr.total td {
       font-weight: 700;
@@ -243,13 +276,20 @@
   </style>
 </head>
 <body>
-  <button class="circle-btn" aria-label="circle button"></button>
+  <button class="circle-btn" id="circleBtn" aria-label="menu toggle"></button>
+  <div class="circle-menu" id="circleMenu">
+    <ul>
+      <li>Option 1</li>
+      <li>Option 2</li>
+      <li>Option 3</li>
+    </ul>
+  </div>
+  <div class="logo">
+    <div class="mark">IELTS</div>
+    <div class="sub">from idp</div>
+  </div>
 
   <section class="intro-section">
-    <div class="logo">
-      <div class="mark">IELTS</div>
-      <div class="sub">from idp</div>
-    </div>
     <div class="hero">
       <h1 id="greeting">Hello, username</h1>
       <button class="rect-btn">text</button>
@@ -264,9 +304,10 @@
       </div>
       <div class="card-subtitle">Bấm vào ngày/tuần để xem thống kê chi tiết số bài đã làm</div>
 
-      <div id="tailRow" class="tail-row"></div>
-      <div id="monthLabel" class="month-label"></div>
-      <div id="calendarGrid" class="calendar-grid"></div>
+      <div id="calendarScroll" class="calendar-scroll">
+        <div id="loadingIndicator" class="loading-indicator" style="display:none;">Loading...</div>
+        <div id="monthsContainer"></div>
+      </div>
     </div>
 
     <div class="card stats-card">
@@ -291,7 +332,6 @@
   <script>
     const WEEKDAYS = ['T2','T3','T4','T5','T6','T7','CN'];
     const SUBJECTS = ['reading','listening','writing','speaking'];
-    const SUBJECT_LABELS = { reading:'Reading', listening:'Listening', writing:'Writing', speaking:'Speaking' };
 
     function pad(n){ return n < 10 ? '0' + n : String(n); }
     function fmtDate(d){ return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()}`; }
@@ -311,75 +351,136 @@
       return weeks;
     }
 
-    const today = new Date();
-    const y = today.getFullYear();
-    const m = today.getMonth();
+    let today = new Date();
 
-    // --- Previous-month tail row (only the trailing days before this month starts) ---
-    const prevDate = new Date(y, m, 0);
-    const prevY = prevDate.getFullYear();
-    const prevM = prevDate.getMonth();
-    const prevWeeks = buildMonthWeeks(prevY, prevM);
-    const tailWeekIndex = prevWeeks.length - 1;
-    const tailWeek = prevWeeks[tailWeekIndex];
+    // --- Circle button toggles a dropdown panel that expands down to the
+    // same height as the "text" box under the greeting ---
+    const circleBtn = document.getElementById('circleBtn');
+    const circleMenu = document.getElementById('circleMenu');
+    const rectBtn = document.querySelector('.rect-btn');
+    let menuOpen = false;
 
-    const tailRow = document.getElementById('tailRow');
-    const tailLabel = document.createElement('span');
-    tailLabel.textContent = `Tuần ${tailWeekIndex + 1}`;
-    tailRow.appendChild(tailLabel);
-    tailWeek.forEach(day => {
-      if (day !== null) {
-        const span = document.createElement('span');
-        span.className = 'day-num';
-        span.textContent = day;
-        tailRow.appendChild(span);
+    circleBtn.addEventListener('click', () => {
+      menuOpen = !menuOpen;
+      if (menuOpen) {
+        const menuTop = circleMenu.getBoundingClientRect().top;
+        const targetBottom = rectBtn.getBoundingClientRect().bottom;
+        const height = Math.max(0, targetBottom - menuTop);
+        circleMenu.style.height = height + 'px';
+      } else {
+        circleMenu.style.height = '0px';
       }
     });
-    if (tailRow.children.length <= 1) tailRow.style.display = 'none';
 
-    // --- Current month ---
-    document.getElementById('monthLabel').textContent = `Tháng ${pad(m+1)} / ${y}`;
-    const weeks = buildMonthWeeks(y, m);
-    const grid = document.getElementById('calendarGrid');
+    window.addEventListener('resize', () => {
+      if (!menuOpen) return;
+      const menuTop = circleMenu.getBoundingClientRect().top;
+      const targetBottom = rectBtn.getBoundingClientRect().bottom;
+      circleMenu.style.height = Math.max(0, targetBottom - menuTop) + 'px';
+    });
+    let cursorY = today.getFullYear();
+    let cursorM = today.getMonth();
 
-    grid.appendChild(document.createElement('div'));
-    WEEKDAYS.forEach(wd => {
-      const el = document.createElement('div');
-      el.className = 'weekday-label';
-      el.textContent = wd;
-      grid.appendChild(el);
+    function renderMonthBlock(y, m, markToday){
+      const wrap = document.createElement('div');
+      wrap.className = 'month-block';
+
+      const label = document.createElement('div');
+      label.className = 'month-label';
+      label.textContent = `Tháng ${pad(m+1)} / ${y}`;
+      wrap.appendChild(label);
+
+      const grid = document.createElement('div');
+      grid.className = 'calendar-grid';
+      grid.appendChild(document.createElement('div'));
+      WEEKDAYS.forEach(wd => {
+        const el = document.createElement('div');
+        el.className = 'weekday-label';
+        el.textContent = wd;
+        grid.appendChild(el);
+      });
+
+      const weeks = buildMonthWeeks(y, m);
+      weeks.forEach((week, wi) => {
+        const wlabel = document.createElement('div');
+        wlabel.className = 'week-label';
+        wlabel.textContent = `Tuần ${wi + 1}`;
+        grid.appendChild(wlabel);
+
+        week.forEach(day => {
+          const cell = document.createElement('div');
+          if (day === null) {
+            cell.className = 'day-cell empty';
+          } else {
+            cell.className = 'day-cell';
+            cell.textContent = day;
+            if (markToday && day === today.getDate()) cell.classList.add('today');
+          }
+          grid.appendChild(cell);
+        });
+      });
+
+      wrap.appendChild(grid);
+      return wrap;
+    }
+
+    const monthsContainer = document.getElementById('monthsContainer');
+    const calendarScroll = document.getElementById('calendarScroll');
+    const loadingIndicator = document.getElementById('loadingIndicator');
+
+    // Initial view: current month only, today marked
+    monthsContainer.appendChild(renderMonthBlock(cursorY, cursorM, true));
+
+    // Fit the viewport exactly to the current month's height by default
+    requestAnimationFrame(() => {
+      calendarScroll.style.height = monthsContainer.offsetHeight + 'px';
     });
 
-    weeks.forEach((week, wi) => {
-      const label = document.createElement('div');
-      label.className = 'week-label';
-      label.textContent = `Tuần ${wi + 1}`;
-      grid.appendChild(label);
+    let isLoading = false;
+    function loadPreviousMonth(){
+      if (isLoading) return;
+      isLoading = true;
+      loadingIndicator.style.display = 'block';
 
-      week.forEach(day => {
-        const cell = document.createElement('div');
-        if (day === null) {
-          cell.className = 'day-cell empty';
-        } else {
-          cell.className = 'day-cell';
-          cell.textContent = day;
-          if (day === today.getDate()) cell.classList.add('today');
-        }
-        grid.appendChild(cell);
-      });
+      setTimeout(() => {
+        cursorM -= 1;
+        if (cursorM < 0) { cursorM = 11; cursorY -= 1; }
+
+        const beforeHeight = monthsContainer.scrollHeight;
+        const block = renderMonthBlock(cursorY, cursorM, false);
+        monthsContainer.insertBefore(block, monthsContainer.firstChild);
+        const afterHeight = monthsContainer.scrollHeight;
+
+        // keep the visual scroll position stable after prepending
+        calendarScroll.scrollTop += (afterHeight - beforeHeight);
+
+        loadingIndicator.style.display = 'none';
+        isLoading = false;
+      }, 350);
+    }
+
+    // Scrolling UP near the top of the box loads more history, unlimited.
+    // Scrolling down never loads anything beyond the current month.
+    calendarScroll.addEventListener('wheel', (e) => {
+      if (e.deltaY < 0 && calendarScroll.scrollTop <= 40) {
+        loadPreviousMonth();
+      }
     });
 
     // --- Weekly stats table: real current week (Mon-Sun), click-to-log demo data ---
-    const dow = today.getDay() === 0 ? 6 : today.getDay() - 1; // Mon=0
-    const monday = new Date(today);
-    monday.setDate(today.getDate() - dow);
-
-    const weekDates = [];
-    for (let i = 0; i < 7; i++) {
-      const d = new Date(monday);
-      d.setDate(monday.getDate() + i);
-      weekDates.push(d);
+    function computeWeekDates(){
+      const dow = today.getDay() === 0 ? 6 : today.getDay() - 1; // Mon=0
+      const monday = new Date(today);
+      monday.setDate(today.getDate() - dow);
+      const dates = [];
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(monday);
+        d.setDate(monday.getDate() + i);
+        dates.push(d);
+      }
+      return dates;
     }
+    let weekDates = computeWeekDates();
 
     const STORAGE_KEY = 'weeklyTrackerDemo';
     function loadData(){
@@ -438,6 +539,30 @@
     }
 
     render();
+
+    // --- Live rollover: if the tab is left open past midnight, advance
+    // "today" automatically instead of staying frozen on the old date. ---
+    function checkForNewDay(){
+      const now = new Date();
+      if (sameDay(now, today)) return;
+
+      today = now;
+
+      // Reset the calendar back to a fresh view of the new current month.
+      cursorY = today.getFullYear();
+      cursorM = today.getMonth();
+      monthsContainer.innerHTML = '';
+      monthsContainer.appendChild(renderMonthBlock(cursorY, cursorM, true));
+      calendarScroll.style.height = 'auto';
+      requestAnimationFrame(() => {
+        calendarScroll.style.height = monthsContainer.offsetHeight + 'px';
+      });
+
+      // Recompute the current week and re-render the tracker.
+      weekDates = computeWeekDates();
+      render();
+    }
+    setInterval(checkForNewDay, 60000); // check once a minute
   </script>
 </body>
 </html>

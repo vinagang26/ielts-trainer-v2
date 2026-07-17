@@ -284,13 +284,9 @@
   <div class="circle-menu" id="circleMenu">
     <div class="circle-cap" id="circleCap" aria-label="menu toggle"></div>
     <ul class="circle-menu-options">
-      <li>Reading</li>
-      <li>Listening</li>
-      <li>Writing</li>
-      <li>Speaking</li>
-      <li>Vocabulary</li>
-      <li id="menuGrammar">Grammar</li>
-      <li>Setting</li>
+      <li>Option 1</li>
+      <li>Option 2</li>
+      <li>Option 3</li>
     </ul>
   </div>
   <div class="logo">
@@ -407,12 +403,6 @@
     document.addEventListener('click', (e) => {
       if (menuOpen && !circleMenu.contains(e.target)) closeMenu();
     });
-
-    // Grammar menu item navigates to a separate blank page, same tab.
-    document.getElementById('menuGrammar').addEventListener('click', () => {
-      location.href = 'grammar.html';
-    });
-
     let cursorY = today.getFullYear();
     let cursorM = today.getMonth();
 
