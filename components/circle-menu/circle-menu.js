@@ -1,5 +1,3 @@
-# JS
-# ===========
 // --- Circle button toggles a dropdown panel that expands down to the
 // same height as the "text" box under the greeting ---
 // --- The circle itself expands into a stadium shape containing options.
@@ -12,14 +10,14 @@
 function initCircleMenu(onNavigate) {
   const circleMenu = document.getElementById('circleMenu');
   const circleCap = document.getElementById('circleCap');
-  let menuOpen = false;
+  let menuOpen = false; //menu is closed by default
 
-  const STADIUM_HEIGHT = 420;
+  const STADIUM_HEIGHT = 420; 
 
   function openMenu() {
     circleMenu.style.height = STADIUM_HEIGHT + 'px';
     circleMenu.classList.add('open');
-    menuOpen = true;
+    menuOpen = true; //
   }
 
   function closeMenu() {
@@ -28,13 +26,13 @@ function initCircleMenu(onNavigate) {
     menuOpen = false;
   }
 
-  circleCap.addEventListener('click', (e) => {
+  circleCap.addEventListener('click', (e) => { //
     e.stopPropagation();
-    menuOpen ? closeMenu() : openMenu();
+    menuOpen ? closeMenu() : openMenu(); //check if menu is open or closed and toggle accordingly
   });
 
-  document.addEventListener('click', (e) => {
-    if (menuOpen && !circleMenu.contains(e.target)) closeMenu();
+  document.addEventListener('click', (e) => { 
+    if (menuOpen && !circleMenu.contains(e.target)) closeMenu(); //is menu open and click is outside of menu? then close menu
   });
 
   document.querySelectorAll('.circle-menu-options li[data-route]').forEach(li => {
