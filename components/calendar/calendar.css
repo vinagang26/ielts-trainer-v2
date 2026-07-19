@@ -1,5 +1,6 @@
-/* Calendar card */
-.legend {
+
+    .calendar-card { width: 480px; }
+    .legend {
       font-size: 0.85rem;
       color: #333;
       display: flex;
@@ -13,3 +14,68 @@
       background: #13a62e;
       display: inline-block;
     }
+
+    /* part 2 */
+    /* ============================================================
+       START → components/calendar/calendar.css  (part 2: month grid rendering)
+       ============================================================ */
+    /* Scrollable calendar viewport: fits exactly the current month by default;
+       scrolling up inside it loads earlier months, unlimited. Scrolling down
+       never reveals anything beyond the current month. */
+    .calendar-scroll {
+      overflow-y: auto;
+      overflow-x: hidden;
+      scrollbar-width: thin;
+    }
+    .loading-indicator {
+      text-align: center;
+      font-size: 0.85rem;
+      color: #aaa;
+      padding: 10px 0;
+    }
+    .month-block { margin-bottom: 18px; }
+    .month-label {
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: #1a1a1a;
+      margin-bottom: 10px;
+    }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: 56px repeat(7, 1fr);
+      row-gap: 10px;
+      align-items: center;
+    }
+    .week-label {
+      font-size: 0.8rem;
+      color: #888;
+    }
+    .weekday-label {
+      font-size: 0.8rem;
+      color: #999;
+      text-align: center;
+      font-weight: 600;
+    }
+    .day-cell {
+      text-align: center;
+      font-size: 0.9rem;
+      color: #1a1a1a;
+      position: relative;
+    }
+    .day-cell.today {
+      font-weight: 700;
+      color: #e0ac00;
+    }
+    .day-cell.today::after {
+      content: '';
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #ffcc00;
+      position: absolute;
+      bottom: -6px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    .day-cell.empty { visibility: hidden; }

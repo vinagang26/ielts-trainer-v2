@@ -1,47 +1,45 @@
-/* The circle button itself morphs into a stadium/capsule shape when
-   clicked — same element, no separate panel, no seam line between them */
 .circle-menu {
-  position: fixed;
-  top: 30px;
-  left: 30px;
-  width: 60px;
-  height: 60px;
-  border-radius: 30px;
-  border: 3px solid #1a1a1a;
-  background: #ffffff;
-  cursor: pointer;
-  overflow: hidden;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-  transition: height 0.3s ease, box-shadow 0.3s ease;
-  z-index: 101;
-}
-.circle-menu.open {
-  box-shadow: 0 12px 30px rgba(0,0,0,0.4);
-}
-.circle-cap {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 60px;
-  height: 60px;
-}
-.circle-menu-options {
-  list-style: none;
-  margin: 0;
-  padding: 76px 8px 14px;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.2s ease;
-}
-.circle-menu.open .circle-menu-options {
-  opacity: 1;
-  pointer-events: auto;
-}
-.circle-menu-options li {
-  font-size: 0.68rem;
-  text-align: center;
-  color: #1a1a1a;
-  padding: 8px 0;
-  border-bottom: 1px solid #eee;
-}
-.circle-menu-options li:last-child { border-bottom: none; }
+      position: fixed;
+      top: 30px;
+      left: 30px;
+      width: 60px;
+      height: 60px;
+      border-radius: 30px;
+      border: 3px solid #1a1a1a;
+      background: #ffffff;
+      cursor: pointer;
+      overflow: hidden;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      transition: height 0.3s ease, box-shadow 0.3s ease;
+      z-index: 101;
+    }
+    .circle-menu.open {
+      box-shadow: 0 12px 30px rgba(0,0,0,0.4);
+    }
+    .circle-cap {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 60px;
+      height: 60px;
+    }
+    .circle-menu-options {
+      list-style: none;
+      margin: 0;
+      padding: 76px 8px 14px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+    .circle-menu.open .circle-menu-options {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .circle-menu-options li {
+      font-size: 0.68rem;
+      text-align: center;
+      color: #1a1a1a;
+      padding: 8px 0;
+      border-bottom: 1px solid #eee;
+    }
+    .circle-menu-options li:last-child { border-bottom: none; }

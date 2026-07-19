@@ -1,11 +1,12 @@
- .card {
+
+    .card {
       background: #ffffff;
       border: 1px solid #e4e7eb;
       border-radius: 8px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.06);
       padding: 20px 24px;
     }
-.card-header-row {
+    .card-header-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -16,7 +17,6 @@
       font-weight: 700;
       color: #1a1a1a;
     }
-
     .card-subtitle {
       font-size: 0.8rem;
       color: #888;

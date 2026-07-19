@@ -7,15 +7,171 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="components/circle-menu/circle-menu.css">
-  <link rel="stylesheet" href="components/Logo/Logo.css">
-  <link rel="stylesheet" href="styles/global/global.css">
-  <link rel="stylesheet" href="styles/card/card.css">
-  <link rel="stylesheet" href="pages/home/home.css">
-  <link rel="stylesheet" href="pages/tracker/tracker.css">
-  <link rel="stylesheet" href="components/calendar/calendar.css">
-
   <style>
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      background: #ffffff;
+      font-family: Arial, sans-serif;
+    }
+
+    /* The circle button itself morphs into a stadium/capsule shape when
+       clicked — same element, no separate panel, no seam line between them */
+    .circle-menu {
+      position: fixed;
+      top: 30px;
+      left: 30px;
+      width: 60px;
+      height: 60px;
+      border-radius: 30px;
+      border: 3px solid #1a1a1a;
+      background: #ffffff;
+      cursor: pointer;
+      overflow: hidden;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      transition: height 0.3s ease, box-shadow 0.3s ease;
+      z-index: 101;
+    }
+    .circle-menu.open {
+      box-shadow: 0 12px 30px rgba(0,0,0,0.4);
+    }
+    .circle-cap {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 60px;
+      height: 60px;
+    }
+    .circle-menu-options {
+      list-style: none;
+      margin: 0;
+      padding: 76px 8px 14px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+    .circle-menu.open .circle-menu-options {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .circle-menu-options li {
+      font-size: 0.68rem;
+      text-align: center;
+      color: #1a1a1a;
+      padding: 8px 0;
+      border-bottom: 1px solid #eee;
+    }
+    .circle-menu-options li:last-child { border-bottom: none; }
+
+    /* Logo: fixed to viewport too, top-right, same outline style as the circle */
+    .logo {
+      position: fixed;
+      top: 30px;
+      right: 30px;
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border: 3px solid #1a1a1a;
+      border-radius: 999px;
+      background: #ffffff;
+      padding: 8px 16px;
+      line-height: 1.1;
+      z-index: 100;
+    }
+    .logo .mark {
+      font-weight: 800;
+      font-size: 1.05rem;
+      color: #1a1a1a;
+      letter-spacing: 0.5px;
+    }
+    .logo .sub {
+      font-size: 0.65rem;
+      color: #1a1a1a;
+    }
+
+    /* Section 1: intro screen */
+    .intro-section {
+      position: relative;
+      min-height: 100vh;
+    }
+    .hero {
+      position: absolute;
+      top: 140px;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+    }
+    h1 {
+      font-family: 'Caveat', cursive;
+      font-size: 6rem;
+      font-weight: 600;
+      color: #1a1a1a;
+      margin: 0;
+    }
+    .rect-btn {
+      display: block;
+      margin: 30px auto 0;
+      width: 260px;
+      padding: 14px 0;
+      font-family: monospace;
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: #1a1a1a;
+      background: transparent;
+      border: 3px solid #1a1a1a;
+      cursor: pointer;
+    }
+
+    /* Section 2: tracker dashboard */
+    .tracker-section {
+      padding: 24px;
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      justify-content: center;
+    }
+    .card {
+      background: #ffffff;
+      border: 1px solid #e4e7eb;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      padding: 20px 24px;
+    }
+
+    /* Calendar card */
+    .calendar-card { width: 480px; }
+    .card-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+    .card-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #1a1a1a;
+    }
+    .legend {
+      font-size: 0.85rem;
+      color: #333;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .legend-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #13a62e;
+      display: inline-block;
+    }
+    .card-subtitle {
+      font-size: 0.8rem;
+      color: #888;
+      margin-bottom: 14px;
+    }
 
     /* Scrollable calendar viewport: fits exactly the current month by default;
        scrolling up inside it loads earlier months, unlimited. Scrolling down

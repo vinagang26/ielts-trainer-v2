@@ -1,5 +1,4 @@
-/* Logo: fixed to viewport too, top-right, same outline style as the circle */
-    .logo {
+.logo {
       position: fixed;
       top: 30px;
       right: 30px;

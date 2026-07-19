@@ -1,0 +1,29 @@
+.app-view {
+  opacity: 1;
+  transition: opacity 0.18s ease;
+}
+
+.app-view.view-hidden {
+  display: none;
+}
+
+.app-view.view-entering {
+  opacity: 0;
+}
+
+.content-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.page-title {
+  font-family: 'Caveat', cursive;
+  font-size: 7rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0;
+  text-align: center;
+}

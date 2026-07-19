@@ -1,0 +1,43 @@
+ .stats-card { width: 560px; }
+    table.stats-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 14px;
+      font-size: 0.85rem;
+    }
+    .stats-table th {
+      background: #f2f2f7;
+      color: #555;
+      font-weight: 700;
+      padding: 10px 8px;
+      text-align: center;
+      border: 1px solid #e4e7eb;
+    }
+    .stats-table td {
+      padding: 10px 8px;
+      text-align: center;
+      border: 1px solid #e4e7eb;
+      color: #333;
+      cursor: pointer;
+      user-select: none;
+    }
+    .stats-table td.static { cursor: default; }
+    .stats-table td.on {
+      background: #e5f6e9;
+      color: #13a62e;
+      font-weight: 700;
+    }
+    .stats-table tr.today-row td {
+      border-top: 2px solid #ffcc00;
+      border-bottom: 2px solid #ffcc00;
+    }
+    .stats-table tr.total td {
+      font-weight: 700;
+      color: #1a1a1a;
+      cursor: default;
+    }
+    .stats-note {
+      font-size: 0.72rem;
+      color: #aaa;
+      margin-top: 10px;
+    }

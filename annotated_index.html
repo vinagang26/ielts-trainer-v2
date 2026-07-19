@@ -7,152 +7,23 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="components/circle-menu/circle-menu.css">
-  <link rel="stylesheet" href="components/Logo/Logo.css">
-  <link rel="stylesheet" href="styles/global/global.css">
-  <link rel="stylesheet" href="styles/card/card.css">
-  <link rel="stylesheet" href="pages/home/home.css">
-  <link rel="stylesheet" href="pages/tracker/tracker.css">
-  <link rel="stylesheet" href="components/calendar/calendar.css">
-
-  <style>
-
-    /* Scrollable calendar viewport: fits exactly the current month by default;
-       scrolling up inside it loads earlier months, unlimited. Scrolling down
-       never reveals anything beyond the current month. */
-    .calendar-scroll {
-      overflow-y: auto;
-      overflow-x: hidden;
-      scrollbar-width: thin;
-    }
-    .loading-indicator {
-      text-align: center;
-      font-size: 0.85rem;
-      color: #aaa;
-      padding: 10px 0;
-    }
-    .month-block { margin-bottom: 18px; }
-    .month-label {
-      font-weight: 700;
-      font-size: 0.95rem;
-      color: #1a1a1a;
-      margin-bottom: 10px;
-    }
-
-    .calendar-grid {
-      display: grid;
-      grid-template-columns: 56px repeat(7, 1fr);
-      row-gap: 10px;
-      align-items: center;
-    }
-    .week-label {
-      font-size: 0.8rem;
-      color: #888;
-    }
-    .weekday-label {
-      font-size: 0.8rem;
-      color: #999;
-      text-align: center;
-      font-weight: 600;
-    }
-    .day-cell {
-      text-align: center;
-      font-size: 0.9rem;
-      color: #1a1a1a;
-      position: relative;
-    }
-    .day-cell.today {
-      font-weight: 700;
-      color: #e0ac00;
-    }
-    .day-cell.today::after {
-      content: '';
-      width: 5px;
-      height: 5px;
-      border-radius: 50%;
-      background: #ffcc00;
-      position: absolute;
-      bottom: -6px;
-      left: 50%;
-      transform: translateX(-50%);
-    }
-    .day-cell.empty { visibility: hidden; }
-
-    /* Stats table card */
-    .stats-card { width: 560px; }
-    table.stats-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 14px;
-      font-size: 0.85rem;
-    }
-    .stats-table th {
-      background: #f2f2f7;
-      color: #555;
-      font-weight: 700;
-      padding: 10px 8px;
-      text-align: center;
-      border: 1px solid #e4e7eb;
-    }
-    .stats-table td {
-      padding: 10px 8px;
-      text-align: center;
-      border: 1px solid #e4e7eb;
-      color: #333;
-      cursor: pointer;
-      user-select: none;
-    }
-    .stats-table td.static { cursor: default; }
-    .stats-table td.on {
-      background: #e5f6e9;
-      color: #13a62e;
-      font-weight: 700;
-    }
-    .stats-table tr.today-row td {
-      border-top: 2px solid #ffcc00;
-      border-bottom: 2px solid #ffcc00;
-    }
-    .stats-table tr.total td {
-      font-weight: 700;
-      color: #1a1a1a;
-      cursor: default;
-    }
-    .stats-note {
-      font-size: 0.72rem;
-      color: #aaa;
-      margin-top: 10px;
-    }
-
-    /* View switching: content area swaps between "pages" with a fade,
-       persistent chrome (.logo, .circle-menu) stays mounted throughout. */
-    .app-view {
-      opacity: 1;
-      transition: opacity 0.18s ease;
-    }
-    .app-view.view-hidden {
-      display: none;
-    }
-    .app-view.view-entering {
-      opacity: 0;
-    }
-    .content-page {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
-    }
-    .page-title {
-      font-family: 'Caveat', cursive;
-      font-size: 7rem;
-      font-weight: 600;
-      color: #1a1a1a;
-      margin: 0;
-      text-align: center;
-    }
-  </style>
+  <link href="styles/global/global.css" rel="stylesheet">
+  <link href="components/circle-menu/circle-menu.css" rel="stylesheet">
+  <!-- Corrected path: folder is lowercase 'logo' in this repo -->
+  <link href="components/logo/logo.css" rel="stylesheet">
+  <link href="pages/home/home.css" rel="stylesheet">
+  <link href="pages/tracker/tracker.css" rel="stylesheet">
+  <link href="styles/card/style.css" rel="stylesheet">
+  <link href="components/calendar/calendar.css" rel="stylesheet">
+  <!-- Corrected path: stats-table lives under 'stat-table' folder -->
+  <link href="components/stat-table/stats-table.css" rel="stylesheet">
+  <!-- Router/view-switch styles moved out of the inline block so they still load when that block is removed -->
+  <link href="styles/router/router.css" rel="stylesheet">
 </head>
 <body>
+  <!-- ============================================================
+       START → components/circle-menu/circle-menu.html
+       ============================================================ -->
   <div class="circle-menu" id="circleMenu">
     <div class="circle-cap" id="circleCap" aria-label="menu toggle"></div>
     <ul class="circle-menu-options">
@@ -166,20 +37,39 @@
       <li data-route="setting">Setting</li>
     </ul>
   </div>
+  <!-- ============================================================
+       END → components/circle-menu/circle-menu.html
+       ============================================================ -->
+
+  <!-- ============================================================
+       START → components/Logo/Logo.html
+       ============================================================ -->
   <div class="logo">
     <div class="mark">IELTS</div>
     <div class="sub">from idp</div>
   </div>
+  <!-- ============================================================
+       END → components/Logo/Logo.html
+       ============================================================ -->
 
   <div id="homeView" class="app-view">
+    <!-- ============================================================
+         START → pages/home/home.html  (hero block)
+         ============================================================ -->
     <section class="intro-section">
       <div class="hero">
         <h1 id="greeting">Hello, username</h1>
         <button class="rect-btn">text</button>
       </div>
     </section>
+    <!-- ============================================================
+         END → pages/home/home.html  (hero block)
+         ============================================================ -->
 
     <section class="tracker-section">
+      <!-- ============================================================
+           START → components/calendar/calendar.html
+           ============================================================ -->
       <div class="card calendar-card">
         <div class="card-header-row">
           <div class="card-title">Calendar</div>
@@ -192,7 +82,13 @@
           <div id="monthsContainer"></div>
         </div>
       </div>
+      <!-- ============================================================
+           END → components/calendar/calendar.html
+           ============================================================ -->
 
+      <!-- ============================================================
+           START → components/stats-table/stats-table.html
+           ============================================================ -->
       <div class="card stats-card">
         <div class="card-title">Thống kê số bài đã làm trong tuần</div>
         <table class="stats-table">
@@ -210,15 +106,18 @@
         </table>
         <div class="stats-note">Click a cell to mark a session done (demo only — saved in this browser, not real tracked activity).</div>
       </div>
+      <!-- ============================================================
+           END → components/stats-table/stats-table.html
+           ============================================================ -->
     </section>
   </div>
 
   <div id="pagesContainer"></div>
 
   <script>
-    const WEEKDAYS = ['T2','T3','T4','T5','T6','T7','CN'];
-    const SUBJECTS = ['reading','listening','writing','speaking'];
-
+    // ============================================================
+    // START → utils/dateUtils.js  (part 1: generic date helpers)
+    // ============================================================
     function pad(n){ return n < 10 ? '0' + n : String(n); }
     function fmtDate(d){ return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()}`; }
     function sameDay(a,b){ return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate(); }
@@ -237,9 +136,26 @@
       for(let i=0;i<cells.length;i+=7) weeks.push(cells.slice(i,i+7));
       return weeks;
     }
+    // ============================================================
+    // END → utils/dateUtils.js  (part 1)
+    // ============================================================
 
+    // ============================================================
+    // START → app.js / state (shared mutable "today" — read by Calendar,
+    // Stats, and the Rollover service. This is the risky shared-global
+    // I flagged in the original blueprint. Do not duplicate this
+    // variable into multiple files — there must be exactly one copy.)
+    // ============================================================
     let today = new Date();
+    // ============================================================
+    // END → app.js / state
+    // ============================================================
 
+    // ============================================================
+    // START → components/circle-menu/circle-menu.js
+    // (already extracted in a previous step — kept here only for
+    // reference to what the ORIGINAL inline version looked like)
+    // ============================================================
     // --- Circle button toggles a dropdown panel that expands down to the
     // same height as the "text" box under the greeting ---
     // --- The circle itself expands into a stadium shape containing options.
@@ -270,7 +186,13 @@
     document.addEventListener('click', (e) => {
       if (menuOpen && !circleMenu.contains(e.target)) closeMenu();
     });
+    // ============================================================
+    // END → components/circle-menu/circle-menu.js
+    // ============================================================
 
+    // ============================================================
+    // START → router/routes.js  (data) + router/router.js (logic)
+    // ============================================================
     // View switching / router: swaps the visible "page" within this single
     // file. Each route gets its own URL hash and Back/Forward works via the
     // History API — no separate documents, matches the project's existing
@@ -361,6 +283,18 @@
     // defaulting to home.
     const initialRoute = location.hash ? location.hash.slice(1) : 'home';
     showView(initialRoute, { pushHistory: false });
+    // ============================================================
+    // END → router/routes.js + router/router.js
+    // NOTE: showView() reads calendarScroll / monthsContainer, which are
+    // defined further down in the Calendar block. That's a real ordering
+    // dependency — Calendar's DOM refs must exist before showView() can
+    // safely be called. Keep this in mind when you split files apart.
+    // ============================================================
+
+    // ============================================================
+    // START → components/calendar/calendar.js
+    // ============================================================
+    const WEEKDAYS = ['T2','T3','T4','T5','T6','T7','CN'];
 
     let cursorY = today.getFullYear();
     let cursorM = today.getMonth();
@@ -450,6 +384,16 @@
         loadPreviousMonth();
       }
     });
+    // ============================================================
+    // END → components/calendar/calendar.js
+    // NOTE: this block calls pad() and buildMonthWeeks() from
+    // utils/dateUtils.js, and reads the shared `today` variable.
+    // ============================================================
+
+    // ============================================================
+    // START → components/stats-table/stats-table.js
+    // ============================================================
+    const SUBJECTS = ['reading','listening','writing','speaking'];
 
     // --- Weekly stats table: real current week (Mon-Sun), click-to-log demo data ---
     function computeWeekDates(){
@@ -524,7 +468,15 @@
     }
 
     render();
+    // ============================================================
+    // END → components/stats-table/stats-table.js
+    // NOTE: this block calls fmtDate() and sameDay() from
+    // utils/dateUtils.js, and reads the shared `today` variable.
+    // ============================================================
 
+    // ============================================================
+    // START → services/rollover.js
+    // ============================================================
     // --- Live rollover: if the tab is left open past midnight, advance
     // "today" automatically instead of staying frozen on the old date. ---
     function checkForNewDay(){
@@ -548,6 +500,15 @@
       render();
     }
     setInterval(checkForNewDay, 60000);
+    // ============================================================
+    // END → services/rollover.js
+    // NOTE: this is the riskiest file. It reaches into Calendar's
+    // renderMonthBlock/monthsContainer/calendarScroll AND Stats'
+    // computeWeekDates/render, and reassigns the shared `today`
+    // variable that both of them read. Extract this LAST, after
+    // Calendar and Stats already exist as working, verified modules
+    // with something this file can safely call into.
+    // ============================================================
   </script>
 </body>
 </html>
