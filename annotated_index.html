@@ -7,17 +7,15 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&display=swap" rel="stylesheet">
+  <!-- css -->
   <link href="styles/global/global.css" rel="stylesheet">
   <link href="components/circle-menu/circle-menu.css" rel="stylesheet">
-  <!-- Corrected path: folder is lowercase 'logo' in this repo -->
   <link href="components/logo/logo.css" rel="stylesheet">
   <link href="pages/home/home.css" rel="stylesheet">
   <link href="pages/tracker/tracker.css" rel="stylesheet">
-  <link href="styles/card/style.css" rel="stylesheet">
+  <link href="styles/card/card.css" rel="stylesheet">
   <link href="components/calendar/calendar.css" rel="stylesheet">
-  <!-- Corrected path: stats-table lives under 'stat-table' folder -->
   <link href="components/stat-table/stats-table.css" rel="stylesheet">
-  <!-- Router/view-switch styles moved out of the inline block so they still load when that block is removed -->
   <link href="styles/router/router.css" rel="stylesheet">
 </head>
 <body>
@@ -113,286 +111,17 @@
   </div>
 
   <div id="pagesContainer"></div>
+<script src="utils/dateUtils.js"></script>
+<script src="app.js"></script>
+<script src="components/calendar/calendar.js"></script>
+<script src="components/stats-table/stats-table.js"></script>
+<script src="components/circle-menu/circle-menu.js"></script>
+<script src="styles/router/router.js"></script>
 
   <script>
-    // ============================================================
-    // START → utils/dateUtils.js  (part 1: generic date helpers)
-    // ============================================================
-    function pad(n){ return n < 10 ? '0' + n : String(n); }
-    function fmtDate(d){ return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()}`; }
-    function sameDay(a,b){ return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate(); }
+   
 
-    function daysInMonth(y,m){ return new Date(y, m+1, 0).getDate(); }
-    function firstWeekdayMon(y,m){ const d = new Date(y,m,1).getDay(); return d===0 ? 6 : d-1; }
-
-    function buildMonthWeeks(y,m){
-      const first = firstWeekdayMon(y,m);
-      const total = daysInMonth(y,m);
-      const cells = [];
-      for(let i=0;i<first;i++) cells.push(null);
-      for(let d=1; d<=total; d++) cells.push(d);
-      while(cells.length % 7 !== 0) cells.push(null);
-      const weeks = [];
-      for(let i=0;i<cells.length;i+=7) weeks.push(cells.slice(i,i+7));
-      return weeks;
-    }
-    // ============================================================
-    // END → utils/dateUtils.js  (part 1)
-    // ============================================================
-
-    // ============================================================
-    // START → app.js / state (shared mutable "today" — read by Calendar,
-    // Stats, and the Rollover service. This is the risky shared-global
-    // I flagged in the original blueprint. Do not duplicate this
-    // variable into multiple files — there must be exactly one copy.)
-    // ============================================================
-    let today = new Date();
-    // ============================================================
-    // END → app.js / state
-    // ============================================================
-
-    // ============================================================
-    // START → components/circle-menu/circle-menu.js
-    // (already extracted in a previous step — kept here only for
-    // reference to what the ORIGINAL inline version looked like)
-    // ============================================================
-    // --- Circle button toggles a dropdown panel that expands down to the
-    // same height as the "text" box under the greeting ---
-    // --- The circle itself expands into a stadium shape containing options.
-    // Click the cap to open/close; click outside the stadium to close it. ---
-    const circleMenu = document.getElementById('circleMenu');
-    const circleCap = document.getElementById('circleCap');
-    let menuOpen = false;
-
-    const STADIUM_HEIGHT = 420;
-
-    function openMenu(){
-      circleMenu.style.height = STADIUM_HEIGHT + 'px';
-      circleMenu.classList.add('open');
-      menuOpen = true;
-    }
-
-    function closeMenu(){
-      circleMenu.style.height = '60px';
-      circleMenu.classList.remove('open');
-      menuOpen = false;
-    }
-
-    circleCap.addEventListener('click', (e) => {
-      e.stopPropagation();
-      menuOpen ? closeMenu() : openMenu();
-    });
-
-    document.addEventListener('click', (e) => {
-      if (menuOpen && !circleMenu.contains(e.target)) closeMenu();
-    });
-    // ============================================================
-    // END → components/circle-menu/circle-menu.js
-    // ============================================================
-
-    // ============================================================
-    // START → router/routes.js  (data) + router/router.js (logic)
-    // ============================================================
-    // View switching / router: swaps the visible "page" within this single
-    // file. Each route gets its own URL hash and Back/Forward works via the
-    // History API — no separate documents, matches the project's existing
-    // single-file, no-build-step convention.
-    //
-    // ROUTES is the single source of truth: label is shown as the big page
-    // title, and as the menu item text. Adding a new page later means
-    // adding one entry here — nothing else needs to change.
-    const ROUTES = [
-      { key: 'home',       label: 'Dashboard' },
-      { key: 'reading',    label: 'Reading' },
-      { key: 'listening',  label: 'Listening' },
-      { key: 'writing',    label: 'Writing' },
-      { key: 'speaking',   label: 'Speaking' },
-      { key: 'vocabulary', label: 'Vocabulary' },
-      { key: 'grammar',    label: 'Grammar' },
-      { key: 'setting',    label: 'Setting' },
-    ];
-
-    // Build the placeholder page for every route except home (home already
-    // exists as the hand-built dashboard content further up the page).
-    const pagesContainer = document.getElementById('pagesContainer');
-    ROUTES.forEach(route => {
-      if (route.key === 'home') return;
-      const view = document.createElement('div');
-      view.id = `view-${route.key}`;
-      view.className = 'app-view view-hidden';
-      view.innerHTML = `
-        <section class="content-page">
-          <h1 class="page-title">${route.label}</h1>
-        </section>
-      `;
-      pagesContainer.appendChild(view);
-    });
-
-    // VIEWS maps every route key to its DOM element: home view was already
-    // in the HTML, the rest were just generated above.
-    const VIEWS = { home: document.getElementById('homeView') };
-    ROUTES.forEach(route => {
-      if (route.key !== 'home') {
-        VIEWS[route.key] = document.getElementById(`view-${route.key}`);
-      }
-    });
-
-    function showView(name, { pushHistory = true } = {}) {
-      if (!VIEWS[name]) name = 'home'; // unknown hash falls back to home
-      Object.entries(VIEWS).forEach(([key, el]) => {
-        if (key === name) {
-          el.classList.remove('view-hidden');
-          el.classList.add('view-entering');
-          requestAnimationFrame(() => el.classList.remove('view-entering'));
-        } else {
-          el.classList.add('view-hidden');
-        }
-      });
-      if (name === 'home') {
-        // Regression fix: if the app loaded directly on a non-home route,
-        // the calendar's height gets measured further down while its
-        // container is still display:none, which returns 0 and gets
-        // stuck. Re-measuring here, after home becomes visible, corrects
-        // that — same measuring pattern already used in checkForNewDay().
-        requestAnimationFrame(() => {
-          calendarScroll.style.height = monthsContainer.offsetHeight + 'px';
-        });
-      }
-      if (pushHistory) {
-        const url = name === 'home' ? location.pathname : `#${name}`;
-        history.pushState({ view: name }, '', url);
-      }
-    }
-
-    window.addEventListener('popstate', (e) => {
-      const name = (e.state && e.state.view) || 'home';
-      showView(name, { pushHistory: false });
-    });
-
-    // Wire every menu item to its route via data-route, instead of one
-    // hand-written listener per item.
-    document.querySelectorAll('.circle-menu-options li[data-route]').forEach(li => {
-      li.addEventListener('click', () => {
-        showView(li.dataset.route);
-        closeMenu();
-      });
-    });
-
-    // If the page loads with a route already in the URL hash (e.g. someone
-    // bookmarked #grammar or hit refresh), show that page instead of always
-    // defaulting to home.
-    const initialRoute = location.hash ? location.hash.slice(1) : 'home';
-    showView(initialRoute, { pushHistory: false });
-    // ============================================================
-    // END → router/routes.js + router/router.js
-    // NOTE: showView() reads calendarScroll / monthsContainer, which are
-    // defined further down in the Calendar block. That's a real ordering
-    // dependency — Calendar's DOM refs must exist before showView() can
-    // safely be called. Keep this in mind when you split files apart.
-    // ============================================================
-
-    // ============================================================
-    // START → components/calendar/calendar.js
-    // ============================================================
-    const WEEKDAYS = ['T2','T3','T4','T5','T6','T7','CN'];
-
-    let cursorY = today.getFullYear();
-    let cursorM = today.getMonth();
-
-    function renderMonthBlock(y, m, markToday){
-      const wrap = document.createElement('div');
-      wrap.className = 'month-block';
-
-      const label = document.createElement('div');
-      label.className = 'month-label';
-      label.textContent = `Tháng ${pad(m+1)} / ${y}`;
-      wrap.appendChild(label);
-
-      const grid = document.createElement('div');
-      grid.className = 'calendar-grid';
-      grid.appendChild(document.createElement('div'));
-      WEEKDAYS.forEach(wd => {
-        const el = document.createElement('div');
-        el.className = 'weekday-label';
-        el.textContent = wd;
-        grid.appendChild(el);
-      });
-
-      const weeks = buildMonthWeeks(y, m);
-      weeks.forEach((week, wi) => {
-        const wlabel = document.createElement('div');
-        wlabel.className = 'week-label';
-        wlabel.textContent = `Tuần ${wi + 1}`;
-        grid.appendChild(wlabel);
-
-        week.forEach(day => {
-          const cell = document.createElement('div');
-          if (day === null) {
-            cell.className = 'day-cell empty';
-          } else {
-            cell.className = 'day-cell';
-            cell.textContent = day;
-            if (markToday && day === today.getDate()) cell.classList.add('today');
-          }
-          grid.appendChild(cell);
-        });
-      });
-
-      wrap.appendChild(grid);
-      return wrap;
-    }
-
-    const monthsContainer = document.getElementById('monthsContainer');
-    const calendarScroll = document.getElementById('calendarScroll');
-    const loadingIndicator = document.getElementById('loadingIndicator');
-
-    // Initial view: current month only, today marked
-    monthsContainer.appendChild(renderMonthBlock(cursorY, cursorM, true));
-
-    // Fit the viewport exactly to the current month's height by default
-    requestAnimationFrame(() => {
-      calendarScroll.style.height = monthsContainer.offsetHeight + 'px';
-    });
-
-    let isLoading = false;
-    function loadPreviousMonth(){
-      if (isLoading) return;
-      isLoading = true;
-      loadingIndicator.style.display = 'block';
-
-      setTimeout(() => {
-        cursorM -= 1;
-        if (cursorM < 0) { cursorM = 11; cursorY -= 1; }
-
-        const beforeHeight = monthsContainer.scrollHeight;
-        const block = renderMonthBlock(cursorY, cursorM, false);
-        monthsContainer.insertBefore(block, monthsContainer.firstChild);
-        const afterHeight = monthsContainer.scrollHeight;
-
-        // keep the visual scroll position stable after prepending
-        calendarScroll.scrollTop += (afterHeight - beforeHeight);
-
-        loadingIndicator.style.display = 'none';
-        isLoading = false;
-      }, 350);
-    }
-
-    // Scrolling UP near the top of the box loads more history, unlimited.
-    // Scrolling down never loads anything beyond the current month.
-    calendarScroll.addEventListener('wheel', (e) => {
-      if (e.deltaY < 0 && calendarScroll.scrollTop <= 40) {
-        loadPreviousMonth();
-      }
-    });
-    // ============================================================
-    // END → components/calendar/calendar.js
-    // NOTE: this block calls pad() and buildMonthWeeks() from
-    // utils/dateUtils.js, and reads the shared `today` variable.
-    // ============================================================
-
-    // ============================================================
-    // START → components/stats-table/stats-table.js
-    // ============================================================
+    
     const SUBJECTS = ['reading','listening','writing','speaking'];
 
     // --- Weekly stats table: real current week (Mon-Sun), click-to-log demo data ---
