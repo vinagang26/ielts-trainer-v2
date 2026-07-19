@@ -117,48 +117,6 @@
 <script src="components/stats-table/stats-table.js"></script>
 <script src="components/circle-menu/circle-menu.js"></script>
 <script src="styles/router/router.js"></script>
-
-  <script>
-   
-
-    
-    
-
-    // ============================================================
-    // START → services/rollover.js
-    // ============================================================
-    // --- Live rollover: if the tab is left open past midnight, advance
-    // "today" automatically instead of staying frozen on the old date. ---
-    function checkForNewDay(){
-      const now = new Date();
-      if (sameDay(now, today)) return;
-
-      today = now;
-
-      // Reset the calendar back to a fresh view of the new current month.
-      cursorY = today.getFullYear();
-      cursorM = today.getMonth();
-      monthsContainer.innerHTML = '';
-      monthsContainer.appendChild(renderMonthBlock(cursorY, cursorM, true));
-      calendarScroll.style.height = 'auto';
-      requestAnimationFrame(() => {
-        calendarScroll.style.height = monthsContainer.offsetHeight + 'px';
-      });
-
-      // Recompute the current week and re-render the tracker.
-      weekDates = computeWeekDates();
-      render();
-    }
-    setInterval(checkForNewDay, 60000);
-    // ============================================================
-    // END → services/rollover.js
-    // NOTE: this is the riskiest file. It reaches into Calendar's
-    // renderMonthBlock/monthsContainer/calendarScroll AND Stats'
-    // computeWeekDates/render, and reassigns the shared `today`
-    // variable that both of them read. Extract this LAST, after
-    // Calendar and Stats already exist as working, verified modules
-    // with something this file can safely call into.
-    // ============================================================
-  </script>
+<script src="services/rollover.js"></script>
 </body>
 </html>
