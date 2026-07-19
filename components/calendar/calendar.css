@@ -1,0 +1,15 @@
+/* Calendar card */
+.legend {
+      font-size: 0.85rem;
+      color: #333;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .legend-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #13a62e;
+      display: inline-block;
+    }
