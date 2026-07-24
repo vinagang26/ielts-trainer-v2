@@ -34,6 +34,16 @@
    - advanced-grammar.png
 3. Click "Grammar" in menu → page loads
 
+### v0.1.1 – Flexible Image Display (2026-07-22)
+
+**What Changed**
+- Image wrapper: fixed 300px height → flexible min-height 250px
+- Image display: `object-fit: cover` (crops) → `object-fit: contain` (shows full image)
+- Result: Entire image visible for all aspect ratios, cards have variable heights
+
+**Why**
+Grammar images contain semantic content (rules, examples). Showing them fully matters more than uniform card heights.
+
 ### Next Steps
 - Training route (`#grammar-train/{skillKey}`) not built yet
 - Progress tracking (done/in-progress) deferred
