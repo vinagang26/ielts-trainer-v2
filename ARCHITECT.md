@@ -22,6 +22,8 @@
 | `styles/global/globall.css` | Interface Specialist |
 | `styles/card/card.css` | Interface Specialist |
 | `index.html` | Interface Specialist |
+| `pages/grammar/grammar.js` | Interface Specialist |
+| `pages/grammar/grammar.css` | Interface Specialist |
 
 ## Critical Dependencies
 
@@ -42,3 +44,4 @@ Script load order is strict. Changes require architect approval:
 - `index.html` line 81: `<script src="app.js">` → should be `<script src="core/app.js">`
 - `styles/global/globall.css` — duplicate, delete
 - `pages/tracker/tracker.css` — unused, remove
+- `pages/grammar/grammar.js` contains a hardcoded `userAssessmentState` stub (`hasCompletedAssessment`, `bandScore`) at the top of the file. This is a placeholder for real state/session logic — out of Interface Specialist authority. Whoever owns assessment logic and session/state management needs to replace this stub with real data and wire it into `renderProgressRing()`. Do not remove the stub without providing a replacement; the dashboard depends on this shape of data (a 0–100 value or `null`, plus a boolean).
