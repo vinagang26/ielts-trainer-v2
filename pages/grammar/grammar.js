@@ -252,9 +252,9 @@ function setupTrainButtons() {
   trainButtons.forEach(button => {
     button.addEventListener('click', (e) => {
       const skillKey = e.target.dataset.skill;
-      // Redirect to training page for this skill
-      // For now, this is a placeholder — routes will be defined as features are built
-      window.location.hash = `#grammar-train/${skillKey}`;
+      // Route key format matches ROUTES in core/router/router.js exactly:
+      // flat key, no slash — e.g. 'grammar-train-sentence-structure'.
+      showView(`grammar-train-${skillKey}`);
     });
   });
 }

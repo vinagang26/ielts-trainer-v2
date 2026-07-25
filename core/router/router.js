@@ -1,4 +1,4 @@
- // ============================================================
+// ============================================================
     // START → router/routes.js  (data) + router/router.js (logic)
     // ============================================================
     // View switching / router: swaps the visible "page" within this single
@@ -18,6 +18,27 @@
       { key: 'vocabulary', label: 'Vocabulary' },
       { key: 'grammar',    label: 'Grammar' },
       { key: 'setting',    label: 'Setting' },
+      // Grammar skill training sub-pages. Keys must stay in sync with
+      // GRAMMAR_SKILLS in pages/grammar/grammar.js (same key, same order
+      // is not required, but the key string must match exactly).
+      // These are placeholders: skill name centered, nothing else yet.
+      // Future scope (not built): "Start Daily Grammar Training" is meant
+      // to eventually pull a mixture of these pages together — do not
+      // build tight per-page coupling that would make that harder later.
+      { key: 'grammar-train-sentence-structure',   label: 'Sentence Structure' },
+      { key: 'grammar-train-parts-of-speech',       label: 'Parts of Speech' },
+      { key: 'grammar-train-basic-tenses',          label: 'Basic Tenses' },
+      { key: 'grammar-train-articles-determiners',  label: 'Articles & Determiners' },
+      { key: 'grammar-train-pronouns',               label: 'Pronouns' },
+      { key: 'grammar-train-prepositions',           label: 'Prepositions' },
+      { key: 'grammar-train-questions-negatives',    label: 'Questions & Negatives' },
+      { key: 'grammar-train-modals',                 label: 'Modals' },
+      { key: 'grammar-train-conditionals',           label: 'Conditionals' },
+      { key: 'grammar-train-passive',                label: 'Passive Voice' },
+      { key: 'grammar-train-reported-speech',        label: 'Reported Speech' },
+      { key: 'grammar-train-clauses',                label: 'Clauses' },
+      { key: 'grammar-train-gerunds-infinitives',    label: 'Gerunds & Infinitives' },
+      { key: 'grammar-train-advanced-grammar',       label: 'Advanced Grammar' },
     ];
 
     // Build the placeholder page for every route except home (home already
@@ -28,8 +49,13 @@
       const view = document.createElement('div');
       view.id = `view-${route.key}`;
       view.className = 'app-view view-hidden';
+      const isGrammarSkillPage = route.key.startsWith('grammar-train-');
+      const backLink = isGrammarSkillPage
+        ? `<a href="#grammar" class="back-to-grammar-link" data-nav="grammar">&larr; Back to Grammar</a>`
+        : '';
       view.innerHTML = `
         <section class="content-page">
+          ${backLink}
           <h1 class="page-title">${route.label}</h1>
         </section>
       `;
@@ -75,6 +101,19 @@
     window.addEventListener('popstate', (e) => {
       const name = (e.state && e.state.view) || 'home';
       showView(name, { pushHistory: false });
+    });
+
+    // Delegated handler for in-page nav links generated above (e.g. the
+    // "Back to Grammar" link on skill training pages). Using a real click
+    // handler here — not relying on the anchor's default hash-jump — since
+    // showView() is what actually drives view switching, animation state,
+    // and history; a bare hash change bypasses all of that (same bug the
+    // Train button had before it called showView() directly).
+    pagesContainer.addEventListener('click', (e) => {
+      const link = e.target.closest('[data-nav]');
+      if (!link) return;
+      e.preventDefault();
+      showView(link.dataset.nav);
     });
 
 
