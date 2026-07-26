@@ -39,6 +39,9 @@
           } else {
             cell.className = 'day-cell';
             cell.textContent = day;
+            const cellDate = new Date(y, m, day);
+            const dateStr = fmtDate(cellDate);
+            cell.dataset.date = dateStr;
             if (markToday && day === today.getDate()) cell.classList.add('today');
           }
           grid.appendChild(cell);
@@ -48,6 +51,27 @@
       wrap.appendChild(grid);
       return wrap;
     }
+
+    function renderCalendarHighlights(){
+      const dataStr = localStorage.getItem('weeklyTrackerDemo');
+      let data = {};
+      try { data = JSON.parse(dataStr) || {}; } catch(e) {}
+
+      const cells = document.querySelectorAll('.day-cell[data-date]');
+      cells.forEach(cell => {
+        const dateStr = cell.dataset.date;
+        const entry = data[dateStr] || {};
+        const hasActivity = Object.keys(entry).some(k => k !== 'minutes' && (entry[k] > 0 || entry[k] === true));
+        if (hasActivity) {
+          cell.classList.add('has-submission');
+        } else {
+          cell.classList.remove('has-submission');
+        }
+      });
+    }
+
+    window.renderCalendarHighlights = renderCalendarHighlights;
+    setTimeout(renderCalendarHighlights, 0);
 
     const monthsContainer = document.getElementById('monthsContainer');
     const calendarScroll = document.getElementById('calendarScroll');

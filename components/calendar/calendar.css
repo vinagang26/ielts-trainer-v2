@@ -78,4 +78,15 @@
       left: 50%;
       transform: translateX(-50%);
     }
+    .day-cell.has-submission::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #13a62e;
+      position: absolute;
+      top: -4px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
     .day-cell.empty { visibility: hidden; }

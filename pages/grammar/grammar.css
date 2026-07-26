@@ -441,3 +441,540 @@
     font-size: 1rem;
   }
 }
+
+/* ============================================================
+ * Grammar Skill Training Sub-Pages Layout
+ * ============================================================ */
+.back-to-grammar-link {
+  display: inline-block;
+  margin-bottom: 24px;
+  font-family: monospace;
+  font-size: 0.95rem;
+  font-weight: bold;
+  color: #1a1a1a;
+  text-decoration: none;
+  border: 1px solid #1a1a1a;
+  padding: 8px 16px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.back-to-grammar-link:hover {
+  background: #1a1a1a;
+  color: #ffffff;
+}
+
+.grammar-skill-page-center {
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.grammar-skill-title {
+  font-family: 'Caveat', cursive;
+  font-size: 4.5rem;
+  color: #1a1a1a;
+  margin: 0 0 20px 0;
+}
+
+.grammar-subagent-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: #f8f9fa;
+  border: 1.5px dashed #1a1a1a;
+  border-radius: 20px;
+  font-family: monospace;
+  font-size: 0.85rem;
+  color: #4a4a4a;
+  margin-top: 24px;
+}
+
+/* ============================================================
+ * Duolingo-style Word Block Exercise Component
+ * ============================================================ */
+.duo-exercise-card {
+  max-width: 720px;
+  width: 100%;
+  margin: 32px auto 0;
+  background: #ffffff;
+  border: 2px solid #1a1a1a;
+  border-radius: 12px;
+  padding: 28px;
+  text-align: left;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+}
+
+.duo-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  border-bottom: 1.5px solid #eee;
+  padding-bottom: 12px;
+}
+
+.duo-agent-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #eef2ff;
+  color: #3730a3;
+  padding: 6px 14px;
+  border-radius: 16px;
+  font-family: monospace;
+  font-size: 0.85rem;
+  font-weight: bold;
+}
+
+.duo-subtext {
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.duo-prompt-box {
+  margin-bottom: 24px;
+}
+
+.duo-prompt-text {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 8px 0;
+}
+
+.duo-translation {
+  font-size: 0.9rem;
+  color: #555;
+  background: #fdf8f6;
+  padding: 8px 14px;
+  border-left: 3px solid #e63946;
+  border-radius: 4px;
+}
+
+.duo-answer-zone {
+  min-height: 72px;
+  border: 2px dashed #ccc;
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  background: #fafafa;
+  margin-bottom: 24px;
+}
+
+.duo-placeholder-text {
+  color: #999;
+  font-size: 0.9rem;
+  font-family: monospace;
+}
+
+.duo-word-bank {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 28px;
+  min-height: 60px;
+}
+
+.duo-word-chip {
+  display: inline-block;
+  padding: 10px 18px;
+  background: #ffffff;
+  border: 2px solid #1a1a1a;
+  border-radius: 8px;
+  font-family: monospace;
+  font-size: 0.95rem;
+  font-weight: bold;
+  color: #1a1a1a;
+  cursor: pointer;
+  box-shadow: 0 3px 0 #1a1a1a;
+  transition: all 0.15 ease;
+  user-select: none;
+}
+
+.duo-word-chip:hover {
+  background: #f4f4f4;
+  transform: translateY(-2px);
+}
+
+.duo-word-chip:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 #1a1a1a;
+}
+
+.duo-word-chip.selected {
+  background: #1a1a1a;
+  color: #ffffff;
+  box-shadow: 0 3px 0 #4a4a4a;
+}
+
+.duo-actions {
+  display: flex;
+  gap: 16px;
+  justify-content: flex-end;
+}
+
+.duo-btn {
+  padding: 12px 28px;
+  border-radius: 6px;
+  font-family: monospace;
+  font-size: 0.95rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 2px solid #1a1a1a;
+}
+
+.duo-btn-reset {
+  background: transparent;
+  color: #1a1a1a;
+}
+
+.duo-btn-reset:hover:not(:disabled) {
+  background: #f0f0f0;
+}
+
+.duo-btn-check {
+  background: #1a1a1a;
+  color: #ffffff;
+}
+
+.duo-btn-check:hover:not(:disabled) {
+  background: #333333;
+}
+
+.duo-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.duo-feedback-box {
+  margin-top: 24px;
+  padding: 16px 20px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+}
+
+.duo-feedback-success {
+  background: #ecfdf5;
+  border: 2px solid #10b981;
+  color: #065f46;
+}
+
+.duo-feedback-error {
+  background: #fef2f2;
+  border: 2px solid #ef4444;
+  color: #991b1b;
+}
+
+.duo-feedback-title {
+  font-weight: bold;
+  margin-bottom: 6px;
+}
+
+.duo-agent-note {
+  display: block;
+  margin-top: 8px;
+  font-size: 0.88rem;
+}
+
+.duo-q-count {
+  font-family: monospace;
+  font-size: 0.85rem;
+  color: #666;
+  background: #f0f0f0;
+  padding: 4px 12px;
+  border-radius: 12px;
+}
+
+.duo-next-row {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.duo-btn-next {
+  background: #10b981;
+  color: #ffffff;
+  border-color: #059669;
+}
+
+.duo-btn-next:hover {
+  background: #059669;
+}
+
+/* ============================================================
+ * Duolingo Progress Bar & Self-Redemption Completion Screen
+ * ============================================================ */
+.duo-progress-container {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.duo-close-btn {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #888;
+  text-decoration: none;
+  line-height: 1;
+  transition: color 0.2s ease;
+}
+
+.duo-close-btn:hover {
+  color: #1a1a1a;
+}
+
+.duo-progress-bar-bg {
+  flex: 1;
+  height: 16px;
+  background: #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+}
+
+.duo-progress-bar-fill {
+  height: 100%;
+  background: #10b981;
+  border-radius: 12px;
+  transition: width 0.4s ease-in-out;
+}
+
+.duo-completion-card {
+  text-align: center;
+}
+
+.duo-celebration-box {
+  padding: 20px 10px;
+}
+
+.duo-trophy-icon {
+  font-size: 4rem;
+  margin-bottom: 12px;
+  animation: duoBounce 1s infinite alternate;
+}
+
+@keyframes duoBounce {
+  from { transform: translateY(0); }
+  to { transform: translateY(-8px); }
+}
+
+.duo-complete-title {
+  font-family: 'Caveat', cursive;
+  font-size: 3.5rem;
+  color: #1a1a1a;
+  margin: 0 0 8px 0;
+}
+
+.duo-complete-subtitle {
+  font-size: 1.05rem;
+  color: #555;
+  margin-bottom: 28px;
+}
+
+.duo-redemption-card {
+  background: #f0fdf4;
+  border: 2px dashed #10b981;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.duo-redemption-icon {
+  font-size: 2rem;
+}
+
+.duo-redemption-info {
+  font-size: 0.95rem;
+  color: #065f46;
+}
+
+.duo-redemption-info p {
+  margin: 4px 0 0 0;
+  font-size: 0.85rem;
+  color: #047857;
+}
+
+.duo-btn-redeem {
+  background: #10b981;
+  color: #ffffff;
+  border: none;
+  font-size: 1rem;
+  padding: 14px 28px;
+  border-radius: 8px;
+  box-shadow: 0 4px 0 #059669;
+}
+
+.duo-btn-redeem:hover {
+  background: #059669;
+  transform: translateY(-2px);
+}
+
+.duo-btn-redeem:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 #059669;
+}
+
+.duo-redemption-success {
+  color: #065f46;
+  font-size: 1rem;
+}
+
+.duo-btn-return {
+  background: transparent;
+  color: #1a1a1a;
+  border: 2px solid #1a1a1a;
+}
+
+.duo-btn-return:hover {
+  background: #1a1a1a;
+  color: #ffffff;
+}
+
+/* ============================================================
+ * Full-Screen Immersion & Mobile Phone Optimization
+ * ============================================================ */
+body.grammar-fullscreen-active {
+  overflow-x: hidden;
+  background: #f9fafb;
+}
+
+.grammar-fullscreen-training {
+  min-height: 100vh;
+  width: 100vw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 16px;
+  background: #f9fafb;
+}
+
+/* Mobile Phone Responsive Adjustments */
+@media (max-width: 600px) {
+  .grammar-fullscreen-training {
+    padding: 12px 8px;
+    align-items: flex-start;
+  }
+
+  .duo-exercise-card {
+    padding: 18px 14px;
+    margin-top: 10px;
+    border-radius: 16px;
+  }
+
+  .duo-prompt-text {
+    font-size: 1.05rem;
+  }
+
+  .duo-translation {
+    font-size: 0.85rem;
+  }
+
+  .duo-answer-zone {
+    min-height: 85px;
+    padding: 10px;
+    gap: 8px;
+  }
+
+  .duo-word-bank {
+    gap: 8px;
+    justify-content: center;
+  }
+
+  .duo-word-chip {
+    padding: 12px 16px;
+    font-size: 1rem;
+    border-radius: 10px;
+  }
+
+  .duo-actions {
+    flex-direction: column-reverse;
+    gap: 10px;
+  }
+
+  .duo-btn {
+    width: 100%;
+    text-align: center;
+    padding: 14px 0;
+    font-size: 1rem;
+  }
+
+  .duo-complete-title {
+    font-size: 2.6rem;
+  }
+}
+
+/* ============================================================
+ * Sub-agent Deep Grammar Analysis & Diff Styling
+ * ============================================================ */
+.duo-diff-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 12px 0 16px 0;
+}
+
+.duo-diff-item {
+  padding: 10px 14px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+.duo-diff-wrong {
+  background: #fee2e2;
+  color: #991b1b;
+  border-left: 3px solid #ef4444;
+}
+
+.duo-diff-correct {
+  background: #dcfce7;
+  color: #166534;
+  border-left: 3px solid #22c55e;
+}
+
+.duo-analysis-card {
+  background: #ffffff;
+  border: 1.5px solid #fca5a5;
+  border-radius: 8px;
+  padding: 14px 18px;
+  margin-top: 12px;
+}
+
+.duo-analysis-heading {
+  font-weight: bold;
+  color: #991b1b;
+  font-size: 0.92rem;
+  margin-bottom: 6px;
+}
+
+.duo-analysis-text {
+  font-size: 0.9rem;
+  color: #374151;
+  margin: 0 0 10px 0;
+  line-height: 1.45;
+}
+
+.duo-ielts-tip {
+  background: #fffbeeb0;
+  border: 1px dashed #d97706;
+  color: #92400e;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.88rem;
+  margin-top: 10px;
+}

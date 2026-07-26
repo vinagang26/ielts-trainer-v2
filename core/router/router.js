@@ -50,15 +50,19 @@
       view.id = `view-${route.key}`;
       view.className = 'app-view view-hidden';
       const isGrammarSkillPage = route.key.startsWith('grammar-train-');
-      const backLink = isGrammarSkillPage
-        ? `<a href="#grammar" class="back-to-grammar-link" data-nav="grammar">&larr; Back to Grammar</a>`
-        : '';
-      view.innerHTML = `
-        <section class="content-page">
-          ${backLink}
-          <h1 class="page-title">${route.label}</h1>
-        </section>
-      `;
+      if (isGrammarSkillPage) {
+        view.innerHTML = `
+          <div class="grammar-fullscreen-training">
+            <div id="exercise-mount-${route.key}" style="width: 100%; height: 100%;"></div>
+          </div>
+        `;
+      } else {
+        view.innerHTML = `
+          <section class="content-page">
+            <h1 class="page-title">${route.label}</h1>
+          </section>
+        `;
+      }
       pagesContainer.appendChild(view);
     });
 
@@ -82,6 +86,17 @@
           el.classList.add('view-hidden');
         }
       });
+      const circleMenu = document.getElementById('circleMenu');
+      if (name.startsWith('grammar-train-')) {
+        document.body.classList.add('grammar-fullscreen-active');
+        if (circleMenu) circleMenu.style.display = 'none';
+        if (window.GrammarExerciseUI) {
+          window.GrammarExerciseUI.mountGrammarExercise(`exercise-mount-${name}`, name);
+        }
+      } else {
+        document.body.classList.remove('grammar-fullscreen-active');
+        if (circleMenu) circleMenu.style.display = '';
+      }
       if (name === 'home') {
         // Regression fix: if the app loaded directly on a non-home route,
         // the calendar's height gets measured further down while its

@@ -24,6 +24,9 @@
 | `index.html` | Interface Specialist |
 | `pages/grammar/grammar.js` | Interface Specialist |
 | `pages/grammar/grammar.css` | Interface Specialist |
+| `pages/grammar/grammarExercise.js` | Interface Specialist |
+| `services/grammarAgent.js` | AI & Agent Systems Engineer |
+| `services/grammarExercises.js` | Content & Curriculum Engineer |
 
 ## Critical Dependencies
 
@@ -38,6 +41,16 @@ Script load order is strict. Changes require architect approval:
 7. `components/circle-menu/circle-menu.js`
 8. `core/router/router.js`
 9. `services/rollover.js`
+10. `services/grammarAgent.js` (On-demand sub-agent registry & daily training orchestrator)
+11. `services/grammarExercises.js` (Duolingo-style word block exercise dataset for 14 skills)
+12. `pages/grammar/grammarExercise.js` (Interactive word block drop zone & UI renderer)
+13. `pages/grammar/grammar.js`
+
+## Agent & Sub-Agent Architecture
+
+- **On-Demand Sub-Agents**: 14 specialized grammar sub-agents registered in `services/grammarAgent.js`. Sub-agents are lazy-loaded only when navigating to a specific skill sub-page (`#grammar-train-[skillKey]`).
+- **Orchestrator Engine**: `orchestrateDailyTrainingMix()` coordinates daily grammar practice sessions by sampling active sub-agents without loading all 14 simultaneously (ensures zero lag and minimal token usage).
+- **Skill Sub-Page Layout**: Each grammar skill sub-page renders centered skill title, `← Back to Grammar` link, and active sub-agent badge, matching the `circle-menu` navigation paradigm.
 
 ## Known Issues
 
@@ -45,3 +58,4 @@ Script load order is strict. Changes require architect approval:
 - `styles/global/globall.css` — duplicate, delete
 - `pages/tracker/tracker.css` — unused, remove
 - `pages/grammar/grammar.js` contains a hardcoded `userAssessmentState` stub (`hasCompletedAssessment`, `bandScore`) at the top of the file. This is a placeholder for real state/session logic — out of Interface Specialist authority. Whoever owns assessment logic and session/state management needs to replace this stub with real data and wire it into `renderProgressRing()`. Do not remove the stub without providing a replacement; the dashboard depends on this shape of data (a 0–100 value or `null`, plus a boolean).
+

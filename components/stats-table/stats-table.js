@@ -1,7 +1,7 @@
 // ============================================================
     // START → components/stats-table/stats-table.js
     // ============================================================
-    const SUBJECTS = ['reading','listening','writing','speaking'];
+    const SUBJECTS = ['reading','listening','writing','speaking','grammar','vocabulary'];
 
     // --- Weekly stats table: real current week (Mon-Sun), click-to-log demo data ---
     function computeWeekDates(){
@@ -26,13 +26,18 @@
     }
     function saveData(data){
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      if (typeof window.renderCalendarHighlights === 'function') {
+        window.renderCalendarHighlights();
+      }
     }
     let data = loadData();
 
-    function render(){
+    function renderStatsTable(){
+      data = loadData();
       const tbody = document.getElementById('statsBody');
+      if (!tbody) return;
       tbody.innerHTML = '';
-      const totals = { reading:0, listening:0, writing:0, speaking:0, minutes:0 };
+      const totals = { reading:0, listening:0, writing:0, speaking:0, grammar:0, vocabulary:0, minutes:0 };
 
       weekDates.forEach(d => {
         const key = fmtDate(d);
@@ -45,24 +50,39 @@
         dateTd.textContent = key;
         tr.appendChild(dateTd);
 
-        let minutes = 0;
+        let minutes = typeof entry.minutes === 'number' ? entry.minutes : 0;
+
         SUBJECTS.forEach(subj => {
           const td = document.createElement('td');
-          const on = !!entry[subj];
-          if (on) { td.classList.add('on'); td.textContent = '1'; minutes += 5; totals[subj] += 1; }
-          else { td.textContent = '-'; }
+          const val = entry[subj];
+          const count = typeof val === 'number' ? val : (val ? 1 : 0);
+          if (count > 0) {
+            td.classList.add('on');
+            td.textContent = count;
+            totals[subj] += count;
+            if (typeof entry.minutes !== 'number') {
+              minutes += count * 5;
+            }
+          } else {
+            td.textContent = '-';
+          }
           td.addEventListener('click', () => {
-            entry[subj] = !entry[subj];
+            if (typeof entry[subj] === 'number') {
+              entry[subj] = entry[subj] > 0 ? 0 : 1;
+            } else {
+              entry[subj] = !entry[subj];
+            }
             data[key] = entry;
             saveData(data);
-            render();
+            renderStatsTable();
           });
           tr.appendChild(td);
         });
 
         const timeTd = document.createElement('td');
         timeTd.className = 'static';
-        timeTd.textContent = minutes + 'm';
+        const displayMins = Math.round(minutes * 10) / 10;
+        timeTd.textContent = displayMins + 'm';
         totals.minutes += minutes;
         tr.appendChild(timeTd);
 
@@ -71,11 +91,13 @@
 
       const totalTr = document.createElement('tr');
       totalTr.className = 'total';
-      totalTr.innerHTML = `<td>Tổng cộng</td><td>${totals.reading}</td><td>${totals.listening}</td><td>${totals.writing}</td><td>${totals.speaking}</td><td>${totals.minutes}m</td>`;
+      const totMins = Math.round(totals.minutes * 10) / 10;
+      totalTr.innerHTML = `<td>Tổng cộng</td><td>${totals.reading}</td><td>${totals.listening}</td><td>${totals.writing}</td><td>${totals.speaking}</td><td>${totals.grammar}</td><td>${totals.vocabulary}</td><td>${totMins}m</td>`;
       tbody.appendChild(totalTr);
     }
 
-    render();
+    window.renderStatsTable = renderStatsTable;
+    renderStatsTable();
     // ============================================================
     // END → components/stats-table/stats-table.js
     // NOTE: this block calls fmtDate() and sameDay() from
